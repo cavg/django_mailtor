@@ -1,6 +1,0 @@
-include LICENSE
-include README.rst
-include requirements.txt
-recursive-include mailtor/migrations *
-recursive-include mailtor/templates *
-recursive-include mailtor/docs *
