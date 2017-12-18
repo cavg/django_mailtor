@@ -222,8 +222,10 @@ class MailTestCase(TestCase):
         path = "{}/attachment".format(settings.BASE_DIR)
 
         email.send()
+
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, subject)
         self.assertEqual(len(mail.outbox[0].attachments), 1)
 
+        # Cleanning temp directory
         shutil.rmtree(path)
