@@ -6,7 +6,7 @@ from django.core import mail
 from .models import MailTemplateEntities, Mail, MailTemplate, Attachment
 
 import datetime
-import os
+import shutil
 
 def _create_fixtures():
     MailTemplateEntities.objects.create(
@@ -226,4 +226,4 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.outbox[0].subject, subject)
         self.assertEqual(len(mail.outbox[0].attachments), 1)
 
-        os.rmdir(path)
+        shutil.rmtree(path)
