@@ -119,6 +119,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
 STATIC_URL = '/static/'
 
-ESCAPE_TOKEN = "###"
+MAILTOR_ESCAPE_TOKEN = "###"
+MAILTOR_DATE_FORMAT = "%A %d de %B del %Y"
+MAILTOR_DATETIME_FORMAT = "%A %d de %B del %Y a las %H:%M"
+MAILTOR_TIME_FORMAT = "%H:%M:%S"
