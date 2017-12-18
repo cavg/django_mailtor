@@ -3,8 +3,6 @@ from django.dispatch import receiver
 
 from .models import Mail
 
-from toolbox.timezone import to_localtz
-
 import datetime
 import logging
 

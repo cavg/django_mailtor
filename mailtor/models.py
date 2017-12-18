@@ -3,13 +3,12 @@ from django.apps import apps
 from django.conf import settings
 from django.utils import timezone
 from django.core.mail import EmailMessage
+from pytz import timezone as tz
 
 import uuid
 import re
 import datetime
 import logging
-
-from toolbox.timezone import to_localtz
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +181,7 @@ class Mail(models.Model):
     @classmethod
     def build(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, mode_html = False, **body_args):
         if deliver_at is not None:
-            deliver_at = deliver_at.astimezone(timezone(settings.TIME_ZONE))
+            deliver_at = deliver_at.astimezone(tz(settings.TIME_ZONE))
 
         to_send = sender if sender is not None else mail_template.sender
 
@@ -236,7 +235,7 @@ class Mail(models.Model):
 
             email.send()
 
-            self.sent_at = to_localtz(datetime.datetime.now())
+            self.sent_at = datetime.datetime.now().astimezone(tz(settings.TIME_ZONE))
             self.save()
             return True
         except Exception as e:
