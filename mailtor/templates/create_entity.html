@@ -1,0 +1,50 @@
+{% extends "_layout.html" %}
+{% load static %}
+{% block content %}
+    <h2>Create Mail Template Entity</h2>
+    <form class="form-horizontal" action="" method="POST" {% if formset.is_multipart %}enctype="multipart/form-data"{% endif %}>
+        {% csrf_token %}
+        {{ formset.media }}
+        {{ formset.management_form }}
+        {% if formset.errors %}
+            <div class="alert alert-error alert-dismissable fade in">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                Tiene {{formset.errors|length}} erro{{formset.errors|length|pluralize:"r,es"}} al guardar el registro
+            </div>
+        {% endif %}
+        {% for field in formset %}
+            <div class="control-group {{ field.html_name }} {% if field.errors %}error{% endif %}">
+                <label class="control-label">
+                    {{field.label}}
+                    {% if field.field.required %}
+                        *
+                    {% endif %}
+                </label>
+                <div class="controls">
+                    {{ field }}
+                    {% if field.errors %}
+                        <span class="help-inline">
+                            {{ field.errors.as_text }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        {% for field in formset.hidden_fields %}
+            {{ field }}
+        {% endfor %}
+
+        {% block formsets %}
+            {% for formset in inlines %}
+                {% include "inline_formset.html" with formset=formset %}
+            {% endfor %}
+        {% endblock formsets %}
+
+        <div class="form-actions">
+            <input class="btn btn-primary btn-large" type="submit" value="Save"/>
+            {% block extra_buttons %}
+            {% endblock extra_buttons %}
+        </div>
+    </form>
+{% endblock content %}

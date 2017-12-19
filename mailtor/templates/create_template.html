@@ -1,0 +1,101 @@
+{% extends "_layout.html" %}
+{% load static %}
+{% block head %}
+    <link href="https://cdn.quilljs.com/1.0.0/quill.snow.css" rel="stylesheet">
+    <script src="//cdn.quilljs.com/0.20.1/quill.js"></script>
+    <style type="text/css">
+        .ql-snow.ql-toolbar .custom-controls{
+            width:auto;
+            border:ridge;
+            margin-right: 3px;
+            float:right;
+            padding: 2px;
+            height: 28px;
+        }
+    </style>
+{% endblock head %}
+{% block content %}
+    <h2>Create Mail Template </h2>
+    <form action="{% url 'create_template' %}" method="POST" class="form-horizontal">
+        {% csrf_token %}
+        <input id="escape" type="hidden" name="escape" value="{{escape}}">
+        <div class="control-group instance_attr_name ">
+            <label class="control-label">
+                Template Name
+            </label>
+            <div class="controls">
+                <input type="text" name="name" required="" placeholder="Template Name">
+            </div>
+        </div>
+        <div class="control-group instance_attr_name ">
+            <label class="control-label">
+                Email Sender
+            </label>
+            <div class="controls">
+                <input type="email" name="sender" required="" placeholder="Sender">
+            </div>
+        </div>
+        <div class="control-group instance_attr_name ">
+            <label class="control-label">
+                Email Subject
+            </label>
+            <div class="controls">
+                <input type="text" name="subject" required="" placeholder="Subject"><br>
+            </div>
+        </div>
+        <div class="control-group instance_attr_name ">
+            <label class="control-label">
+                Content Mail
+            </label>
+            <div class="controls">
+                <div id="toolbar">
+                    <select class="ql-size">
+                        <option value="small"></option>
+                        <option selected></option>
+                        <option value="large"></option>
+                    </select>
+                    <button class="ql-bold">Bold</button>
+                    {% for mte in mtes %}
+                        <button class='ql-script custom-controls', value="" type="button" data-value='{{mte.token}}'>{{mte.token}}</button>
+                    {% endfor %}
+                </div>
+                <div id="editor" style="height:250px;margin-bottom: 20px;"></div>
+            </div>
+        </div>
+        <input id="body" name="body" type="hidden" value=""><br>
+        <div class="form-actions">
+            <input class="btn btn-primary btn-large" type="submit" value="Save Template"/>
+        </div>
+    </form>
+{% endblock content %}
+{% block foot %}
+    <script>
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            scrollingContainer:true,
+            modules: {
+                toolbar: '#toolbar',
+            }
+        });
+        var current_index = 0;
+        var body = "";
+        var escape = document.getElementById('escape').getAttribute('value');
+        var btns = document.getElementsByClassName('custom-controls');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener('click', function(event, element) {
+                var range = quill.getSelection();
+                if (range) {
+                    if (range.length == 0) {
+                        current_index = range.index;
+                    }
+                }
+                quill.insertText(current_index," "+escape+event.target.getAttribute('data-value')+escape+" ");
+            });
+        }
+        quill.on('text-change', function(range, oldRange, source) {
+            current_index =  range.ops[0].retain+1;
+            body = document.getElementsByClassName('ql-editor')[0].innerHTML;
+            document.getElementById('body').setAttribute('value', body);
+        });
+    </script>
+{% endblock foot %}

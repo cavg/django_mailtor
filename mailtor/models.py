@@ -1,6 +1,7 @@
 from django.db import models
 from django.apps import apps
 from django.conf import settings
+from django.forms import ModelForm
 from django.utils import timezone
 from django.core.mail import EmailMessage
 from pytz import timezone as tz
@@ -30,7 +31,7 @@ class MailTemplate(models.Model):
         return "Name:{}, subject:{}".format(self.name, self.subject)
 
 
-class MailTemplateEntities(models.Model):
+class MailTemplateEntity(models.Model):
     DIRECT_KIND = 1
     IMG_KIND = 2
     DATE_KIND = 3
@@ -43,7 +44,7 @@ class MailTemplateEntities(models.Model):
         (DATE_KIND, 'Date'),
         (TIME_KIND, 'Time'),
         (DATETIME_KIND, 'Datetime'),
-        (LINK_KIND, 'LINK')
+        (LINK_KIND, 'Link')
     )
 
     token = models.CharField(max_length=25, blank=False, null=False)
@@ -57,9 +58,12 @@ class MailTemplateEntities(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "MailTemplateEntities"
-        verbose_name_plural = "MailTemplateEntitiess"
+        verbose_name = "MailTemplateEntity"
+        verbose_name_plural = "MailTemplateEntitys"
 
+    @classmethod
+    def get_escape(self):
+        return getattr(settings, 'MAILTOR_ESCAPE_TOKEN', "###")
 
     """ Obtain replacement values according a instance_attr_name
         If instance_attr_name is not None then correspond a property's instance
@@ -71,9 +75,7 @@ class MailTemplateEntities(models.Model):
     """
     def get_replacement(self, mode_html, **kwargs):
         if self.instance_attr_name is None:
-            for arg_name, value in kwargs.items():
-                    if arg_name == self.arg_name:
-                        return self.get_value_by_kind(value, mode_html)
+            return self.get_value_by_kind(self.arg_name, mode_html)
         else:
             if self.arg_name is not None:
                 for arg_name, instance in kwargs.items():
@@ -83,30 +85,33 @@ class MailTemplateEntities(models.Model):
 
 
     def get_value_by_kind(self, value = None, mode_html = False):
-        if self.kind == MailTemplateEntities.DIRECT_KIND:
+        if self.kind == MailTemplateEntity.DIRECT_KIND:
             return value
-        elif self.kind == MailTemplateEntities.IMG_KIND:
+        elif self.kind == MailTemplateEntity.IMG_KIND:
             if mode_html:
                 return "<img src='{}' alt='{}'>".format(value, value)
             else:
                 return value
-        elif self.kind == MailTemplateEntities.DATE_KIND:
+        elif self.kind == MailTemplateEntity.DATE_KIND:
             return value.strftime(settings.MAILTOR_DATE_FORMAT)
-        elif self.kind == MailTemplateEntities.TIME_KIND:
+        elif self.kind == MailTemplateEntity.TIME_KIND:
             return value.strftime(settings.MAILTOR_TIME_FORMAT)
-        elif self.kind == MailTemplateEntities.DATETIME_KIND:
+        elif self.kind == MailTemplateEntity.DATETIME_KIND:
             return value.strftime(settings.MAILTOR_DATETIME_FORMAT)
-        elif self.kind == MailTemplateEntities.LINK_KIND:
+        elif self.kind == MailTemplateEntity.LINK_KIND:
             if mode_html:
                 return "<a href='{}' target='_blank'>{}</a>".format(value, value)
             else:
                 return value
-        else:
-            return None
 
 
     def __str__(self):
         return "Token:{}, arg_name:{}, Kind:{}, instance_attr_name:{}".format(self.token, self.arg_name, self.kind, self.instance_attr_name)
+
+class MailTemplateEntityForm(ModelForm):
+    class Meta:
+        model = MailTemplateEntity
+        fields = '__all__'
 
 
 class Mail(models.Model):
@@ -133,33 +138,29 @@ class Mail(models.Model):
     def __str__(self):
         return "Sender:{}, receptor_to:{}, deliver_at:{}, template:{}".format(self.sender, self.receptor_to, self.deliver_at, self.mail_template)
 
-    @classmethod
-    def get_token(self):
-        return getattr(settings, 'MAILTOR_ESCAPE_TOKEN', "###")
-
     """ Populate body using params
     Args:
         body(str): Mail body
         **body_args: All args required to obtain values to replace in email body
     Returns:
-        body populated (str), keys not found in MailTemplateEntities(list), keys not founds in args (list)
+        body populated (str), keys not found in MailTemplateEntity(list), keys not founds in args (list)
     """
     @classmethod
     def populate_body(self, body, mode_html, **body_args):
-        token = Mail.get_token()
+        token = MailTemplateEntity.get_escape()
         keys = re.findall("({}+[\w\d.+-]+{})".format(token, token), body)
         not_found_keys = []
         not_found_args = []
         keys = list(set(keys))
         for key in keys:
             try:
-                mte = MailTemplateEntities.objects.get(token = key.replace(token,""))
+                mte = MailTemplateEntity.objects.get(token = key.replace(token,""))
                 replacement = mte.get_replacement(mode_html, **body_args)
                 if replacement is not None:
                     body = body.replace(key, str(replacement))
                 else:
                     not_found_args.append(key.replace(token,""))
-            except MailTemplateEntities.DoesNotExist:
+            except MailTemplateEntity.DoesNotExist:
                 not_found_keys.append(key.replace(token,""))
         return body, not_found_keys, not_found_args
 
@@ -243,19 +244,20 @@ class Mail(models.Model):
             return False
 
 
-
-
 class Attachment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     attachment = models.FileField(upload_to='attachment', null=False, blank=False)
 
     mail = models.ForeignKey(Mail, on_delete=models.CASCADE, null=False, blank=False)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         verbose_name = "Attachment"
         verbose_name_plural = "Attachments"
 
     def __str__(self):
-        return "Attachment:{}, mail:{}".format(self.attachment, self.mail)
+        return "Attachment:{}, mail:{}".format(self.attachment.name, self.mail)
 
 

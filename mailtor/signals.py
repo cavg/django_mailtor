@@ -1,14 +1,8 @@
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from .models import Mail
+from .models import MailTemplateEntity
 
-import datetime
-import logging
-
-logger = logging.getLogger(__name__)
-
-# @receiver(post_save, sender=Mail)
-# def send_instant_mail(sender, instance, created, **kwargs):
-#     if created == True and instance.deliver_at is None:
-#         instance.perform_send()
+@receiver(pre_save, sender=MailTemplateEntity)
+def send_instant_mail(sender, instance, *args, **kwargs):
+    instance.token = instance.token.upper()
