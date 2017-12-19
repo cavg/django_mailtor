@@ -9,6 +9,8 @@ from pytz import timezone as tz
 import uuid
 import re
 import datetime
+from django.db.models import Q
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -56,6 +58,20 @@ class MailTemplateEntity(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+    @classmethod
+    def get_by_token(self, token, filters = None):
+        queries = []
+        queries.append(Q(token=token))
+        if filters is not None:
+            for f in filters:
+                queries.append(f)
+        tokens = MailTemplateEntity.objects.filter(*queries)
+        if tokens.count() == 1:
+            return tokens[0]
+        else:
+            return None
 
     class Meta:
         verbose_name = "MailTemplateEntity"
@@ -146,22 +162,22 @@ class Mail(models.Model):
         body populated (str), keys not found in MailTemplateEntity(list), keys not founds in args (list)
     """
     @classmethod
-    def populate_body(self, body, mode_html, **body_args):
+    def populate_body(self, body, mode_html, filters, **body_args):
         token = MailTemplateEntity.get_escape()
         keys = re.findall("({}+[\w\d.+-]+{})".format(token, token), body)
         not_found_keys = []
         not_found_args = []
         keys = list(set(keys))
         for key in keys:
-            try:
-                mte = MailTemplateEntity.objects.get(token = key.replace(token,""))
-                replacement = mte.get_replacement(mode_html, **body_args)
-                if replacement is not None:
-                    body = body.replace(key, str(replacement))
-                else:
-                    not_found_args.append(key.replace(token,""))
-            except MailTemplateEntity.DoesNotExist:
-                not_found_keys.append(key.replace(token,""))
+                mte = MailTemplateEntity.get_by_token(key.replace(token,""), filters)
+                if mte:
+                    replacement = mte.get_replacement(mode_html, **body_args)
+                    if replacement is not None:
+                        body = body.replace(key, str(replacement))
+                    else:
+                        not_found_args.append(key.replace(token,""))
+                elif mte is None:
+                    not_found_keys.append(key.replace(token,""))
         return body, not_found_keys, not_found_args
 
     """ Replace template body tags for values
@@ -174,13 +190,14 @@ class Mail(models.Model):
         receptor_bcc (str): hide copy to
         deliver_at (datetime): deliver datetime (without tz)
         mail_template (MailTemplate) = Mail will build based on this entity, optional param
+        filter (array<Q>): using to filter MailTemplateEntities
         **body_args: All args required to obtain values to replace in email body
     Returns:
         Mail entity (already created)
 
     """
     @classmethod
-    def build(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, mode_html = False, **body_args):
+    def build(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, mode_html = False, filters = None, **body_args):
         if deliver_at is not None:
             deliver_at = deliver_at.astimezone(tz(settings.TIME_ZONE))
 
@@ -194,7 +211,7 @@ class Mail(models.Model):
             logger.error("Mail require at least to_send, subject, receptor_to and body fields.\nto_send:{},\nsubject:{},\nbody:{},\nreceptor_to:{}".format(to_send, subject, body, receptor_to))
             return None, [], []
 
-        body, nf_keys, nt_args = Mail.populate_body(body, mode_html, **body_args)
+        body, nf_keys, nt_args = Mail.populate_body(body, mode_html, filters, **body_args)
 
         if (len(nf_keys) + len(nt_args)) > 0:
             logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))

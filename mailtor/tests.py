@@ -45,7 +45,7 @@ class MailTemplateEntityTestCase(TestCase):
         self.assertEqual(mte1_email.token, mte1_email.token.upper())
 
         # Test MailTEmplateEntity creation
-        mte1 = MailTemplateEntity.objects.get(token="NAME")
+        mte1 = MailTemplateEntity.get_by_token("NAME")
         self.assertEqual(mte1.arg_name, "user")
 
         # Testing replacement by entity's attr
@@ -54,7 +54,7 @@ class MailTemplateEntityTestCase(TestCase):
         self.assertEqual(mte1.get_replacement(mode_html=False, user=user), user.first_name)
 
         # Testing replacement by regular param
-        mte2 = MailTemplateEntity.objects.get(token="AGE")
+        mte2 = MailTemplateEntity.get_by_token("AGE")
         self.assertEqual(mte2.get_replacement(mode_html=False), mte2.arg_name)
 
     def test_values_by_kind(self):
@@ -126,25 +126,25 @@ class MailTestCase(TestCase):
     def test_populate_body(self):
         # Testing replacement entity
         user = User.objects.get(first_name="User1322")
-        mte_name = MailTemplateEntity.objects.get(token="NAME")
-        mte_age = MailTemplateEntity.objects.get(token="AGE")
+        mte_name = MailTemplateEntity.get_by_token("NAME")
+        mte_age = MailTemplateEntity.get_by_token("AGE")
         body= "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, mte_age.token, self.escape)
         age = 32
-        body_populated, _, _ = Mail.populate_body(body=body, mode_html = False, user=user, age=age)
+        body_populated, _, _ = Mail.populate_body(body=body, mode_html = False, filters = None, user=user, age=age)
         body_expected = "Hello {}, This is an example of populate body email, your age is {}?".format(user.first_name, age)
         self.assertEqual(body_populated, body_expected)
 
         # Testing not found and valid replacement args
         not_found = "NOT_FOUND"
         body = "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, not_found, self.escape)
-        populate_body, nf_keys, _ = Mail.populate_body(body=body, mode_html = False, user=user)
+        populate_body, nf_keys, _ = Mail.populate_body(body=body, mode_html = False, filters=None, user=user)
         body_expected = "Hello {}, This is an example of populate body email, your age is {}{}{}?".format(user.first_name, self.escape, not_found, self.escape)
         self.assertEqual(body_expected, populate_body)
         self.assertEqual(nf_keys, [not_found])
 
         # Testing not found args
         body = "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, mte_age.token, self.escape)
-        body_populated, _, nf_args = Mail.populate_body(body=body, mode_html = False)
+        body_populated, _, nf_args = Mail.populate_body(body=body, mode_html = False, filters=None)
         body_expected = "Hello {}{}{}, This is an example of populate body email, your age is {}?".format(self.escape, mte_name.token, self.escape, mte_age.arg_name)
         self.assertEqual(body_expected, body_populated)
         self.assertEqual(nf_args, [mte_name.token])
@@ -162,6 +162,7 @@ class MailTestCase(TestCase):
             receptor_to = "User <userr@gmail.com>",
             mail_template = mt,
             mode_html = False,
+            filters = None,
             user=user # body args
         )
         self.assertEqual(type(mail), Mail)
@@ -176,6 +177,7 @@ class MailTestCase(TestCase):
         mail, nf_keys, nf_args = Mail.build(
             mail_template = mt,
             mode_html = False,
+            filters = None,
             user=user # body args
         )
         self.assertEqual(mail, None)
@@ -199,6 +201,7 @@ class MailTestCase(TestCase):
             receptor_to = "User <userr@gmail.com>",
             mail_template = mt,
             mode_html = True,
+            filters = None,
             activation_link = link
         )
         self.assertEqual(type(mail), Mail)
