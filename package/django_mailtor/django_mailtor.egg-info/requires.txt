@@ -1,0 +1,2 @@
+Django==2.0
+coverage==4.4.1

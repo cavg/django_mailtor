@@ -1,0 +1,10 @@
+MANIFEST.in
+readme.md
+requirements.txt
+setup.py
+../../requirements.txt
+django_mailtor.egg-info/PKG-INFO
+django_mailtor.egg-info/SOURCES.txt
+django_mailtor.egg-info/dependency_links.txt
+django_mailtor.egg-info/requires.txt
+django_mailtor.egg-info/top_level.txt
