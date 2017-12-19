@@ -44,9 +44,7 @@ MAILTOR_TIME_FORMAT = "%H:%M:%S"
 
 ## Test coverage
 
-`coverage run --source='.' manage.py test mailtor`
-
-`coverage report -m`
+`./test.sh`
 
 ## Contributing
 

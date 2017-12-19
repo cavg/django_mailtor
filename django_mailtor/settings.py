@@ -56,7 +56,7 @@ ROOT_URLCONF = 'django_mailtor.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['mailtor/templates/'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -8,5 +8,5 @@ cd package/django_mailtor/ &&
 python3 setup.py sdist &&
 
 #Install new version
-pip3 install --user dist/django_mailtor-0.0.2.tar.gz &&
+pip3 install --user dist/django_mailtor-0.0.3.tar.gz &&
 cd ../../

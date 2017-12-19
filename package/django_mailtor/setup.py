@@ -13,10 +13,10 @@ with open('requirements.txt') as f:
 
 setup(
     name='django_mailtor',
-    version='0.0.2',
+    version='0.0.3',
     packages=find_packages(),
     include_package_data=True,
-    license='BSD License',
+    license='GNU License',
     description='A Django app ',
     long_description=README,
     url='https://www.example.com/',
@@ -25,7 +25,7 @@ setup(
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
-        'Framework :: Django :: 1.11',
+        'Framework :: Django :: 2.0',
         'Intended Audience :: Developers',
         'License :: CC',
         'Operating System :: OS Independent',
