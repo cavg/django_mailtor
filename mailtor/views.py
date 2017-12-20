@@ -12,7 +12,7 @@ def create_template(request):
         body = request.POST.get('body', '')
         sender = request.POST.get('sender', '')
         subject = request.POST.get('subject', '')
-        mt = MailTemplate.objects.create(
+        mt = MailTemplate.build(
             name = name,
             body = body,
             sender = sender,

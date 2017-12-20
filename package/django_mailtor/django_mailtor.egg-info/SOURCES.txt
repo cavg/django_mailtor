@@ -3,6 +3,7 @@ readme.md
 requirements.txt
 setup.py
 dist/django_mailtor-0.0.2.tar.gz
+dist/django_mailtor-0.0.3.tar.gz
 django_mailtor.egg-info/PKG-INFO
 django_mailtor.egg-info/SOURCES.txt
 django_mailtor.egg-info/dependency_links.txt

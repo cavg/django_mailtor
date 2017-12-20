@@ -4,13 +4,13 @@ from django.conf import settings
 from django.forms import ModelForm
 from django.utils import timezone
 from django.core.mail import EmailMessage
+from django.db.models import Q
+
 from pytz import timezone as tz
 
 import uuid
 import re
 import datetime
-from django.db.models import Q
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,12 @@ class MailTemplate(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def build(self, name, body, sender, subject, **kwargs):
+        obj = MailTemplate(name=name, body=body, sender=sender, subject=subject, **kwargs)
+        obj.save()
+        return obj
 
     class Meta:
         verbose_name = "MailTemplate"
@@ -59,6 +65,11 @@ class MailTemplateEntity(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @classmethod
+    def build(self, token, arg_name, instance_attr_name, kind, **kwargs):
+        obj = MailTemplateEntity(token=token, arg_name=arg_name, instance_attr_name=instance_attr_name, kind=kind, **kwargs)
+        obj.save()
+        return obj
 
     @classmethod
     def get_by_token(self, token, filters = None):
@@ -151,6 +162,12 @@ class Mail(models.Model):
         verbose_name = "Mail"
         verbose_name_plural = "Mails"
 
+    @classmethod
+    def build(self, sender = None, receptor_to = None, receptor_cc = None, receptor_bcc = None, body = None, subject = None, mode_html = None, deliver_at = None, sent_at = None, **kwargs):
+        obj = Mail(sender=sender, receptor_to=receptor_to, receptor_cc=receptor_cc, receptor_bcc=receptor_bcc, body=body, subject=subject, mode_html=mode_html, deliver_at=deliver_at, sent_at=sent_at, **kwargs)
+        obj.save()
+        return obj
+
     def __str__(self):
         return "Sender:{}, receptor_to:{}, deliver_at:{}, template:{}".format(self.sender, self.receptor_to, self.deliver_at, self.mail_template)
 
@@ -197,7 +214,7 @@ class Mail(models.Model):
 
     """
     @classmethod
-    def build(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, mode_html = False, filters = None, **body_args):
+    def build_populate(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, mode_html = False, filters = None, **body_args):
         if deliver_at is not None:
             deliver_at = deliver_at.astimezone(tz(settings.TIME_ZONE))
 
@@ -217,7 +234,7 @@ class Mail(models.Model):
             logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))
             return None, nf_keys, nt_args
         else:
-            mail = Mail.objects.create(
+            mail = Mail.build(
                 sender = to_send,
                 receptor_to = receptor_to,
                 receptor_cc = receptor_cc,

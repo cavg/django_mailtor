@@ -9,7 +9,7 @@ import datetime
 import shutil
 
 def _create_fixtures():
-    MailTemplateEntity.objects.create(
+    MailTemplateEntity.build(
         token = "NAME",
         arg_name = "user",
         instance_attr_name = "first_name",
@@ -23,7 +23,7 @@ def _create_fixtures():
         username = "agent@empresa.cl"
     )
 
-    MailTemplateEntity.objects.create(
+    MailTemplateEntity.build(
         token = "AGE",
         arg_name = "32",
         instance_attr_name = None,
@@ -36,7 +36,7 @@ class MailTemplateEntityTestCase(TestCase):
         _create_fixtures()
 
     def test_replacement_text(self):
-        mte1_email = MailTemplateEntity.objects.create(
+        mte1_email = MailTemplateEntity.build(
             token = "User.Email",
             arg_name = "user",
             instance_attr_name = "email",
@@ -59,7 +59,7 @@ class MailTemplateEntityTestCase(TestCase):
 
     def test_values_by_kind(self):
         # Case IMAGE
-        mte = MailTemplateEntity.objects.create(
+        mte = MailTemplateEntity.build(
             token = "COMPANY_LOGO",
             arg_name = "image",
             instance_attr_name = None,
@@ -72,7 +72,7 @@ class MailTemplateEntityTestCase(TestCase):
         self.assertEqual(result, "<img src='{}' alt='{}'>".format(img_path, img_path))
 
         # Case Date
-        mte = MailTemplateEntity.objects.create(
+        mte = MailTemplateEntity.build(
             token = "DEBT_DATE",
             arg_name = "debt_date",
             instance_attr_name = None,
@@ -83,7 +83,7 @@ class MailTemplateEntityTestCase(TestCase):
         self.assertEqual(result, date.strftime(settings.MAILTOR_DATE_FORMAT))
 
         # Case Time
-        mte = MailTemplateEntity.objects.create(
+        mte = MailTemplateEntity.build(
             token = "DEBT_DATE",
             arg_name = "debt_date",
             instance_attr_name = None,
@@ -94,7 +94,7 @@ class MailTemplateEntityTestCase(TestCase):
         self.assertEqual(result, time.strftime(settings.MAILTOR_TIME_FORMAT))
 
         # Case Datetime
-        mte = MailTemplateEntity.objects.create(
+        mte = MailTemplateEntity.build(
             token = "DEBT_DATE",
             arg_name = "debt_date_time",
             instance_attr_name = None,
@@ -105,7 +105,7 @@ class MailTemplateEntityTestCase(TestCase):
         self.assertEqual(result, dt.strftime(settings.MAILTOR_DATETIME_FORMAT))
 
         # Case link
-        mte = MailTemplateEntity.objects.create(
+        mte = MailTemplateEntity.build(
             token = "DEBT_DATE",
             arg_name = "debt_date",
             instance_attr_name = None,
@@ -151,14 +151,14 @@ class MailTestCase(TestCase):
 
     def test_build(self):
         body = "Hello {}NAME{}, This is an example of populate body email".format(self.escape, self.escape)
-        mt = MailTemplate.objects.create(
+        mt = MailTemplate.build(
             name = "template-email1",
             body = body,
             sender = "Camilo Verdugo <asdf@gmail.com>",
             subject = "Subject emails"
         )
         user = User.objects.get(first_name="User1322")
-        mail, nf_keys, nf_args = Mail.build(
+        mail, nf_keys, nf_args = Mail.build_populate(
             receptor_to = "User <userr@gmail.com>",
             mail_template = mt,
             mode_html = False,
@@ -174,7 +174,7 @@ class MailTestCase(TestCase):
         self.assertEqual(type(mail.sent_at), datetime.datetime)
 
         # Test no specify receptor_to
-        mail, nf_keys, nf_args = Mail.build(
+        mail, nf_keys, nf_args = Mail.build_populate(
             mail_template = mt,
             mode_html = False,
             filters = None,
@@ -184,20 +184,20 @@ class MailTestCase(TestCase):
 
     def test_build_mail_mode_html(self):
         link = "http://www.company.com/activation?foo"
-        mte = MailTemplateEntity.objects.create(
+        mte = MailTemplateEntity.build(
             token = "ACTIVATION_LINK",
             arg_name = link,
             instance_attr_name = None,
             kind = MailTemplateEntity.LINK_KIND
         )
         body = "Hello active your account at {}ACTIVATION_LINK{}".format(self.escape, self.escape)
-        mt = MailTemplate.objects.create(
+        mt = MailTemplate.build(
             name = "template-email1",
             body = body,
             sender = "Camilo Verdugo <asdf@gmail.com>",
             subject = "Subject emails"
         )
-        mail, nf_keys, nf_args = Mail.build(
+        mail, nf_keys, nf_args = Mail.build_populate(
             receptor_to = "User <userr@gmail.com>",
             mail_template = mt,
             mode_html = True,
@@ -212,7 +212,7 @@ class MailTestCase(TestCase):
 
     def test_send(self):
         subject = "Greetings from Awesome Company!"
-        email = Mail.objects.create(
+        email = Mail.build(
             sender = "Company No Reply <no-reply@company.com>",
             receptor_to = "Customer <customer@customer.com>",
             body = "Hello Dear Customer!",

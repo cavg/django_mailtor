@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: django-mailtor
-Version: 0.0.3
+Version: 0.0.4
 Summary: A Django app 
 Home-page: https://www.example.com/
 Author: Camilo Verdugo
