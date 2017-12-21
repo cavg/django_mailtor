@@ -156,12 +156,21 @@ class MailTestCase(TestCase):
             sender = "Camilo Verdugo <asdf@gmail.com>",
             subject = "Subject emails"
         )
+
         user = User.objects.get(first_name="User1322")
-        mail, nf_keys, nf_args = Mail.build_populate(
-            receptor_to = "User <userr@gmail.com>",
-            mail_template = mt,
-            filters = None,
-            user=user # body args
+        mail_fields = {
+            'sender':mt.sender,
+            'receptor_to':"User <userr@gmail.com>",
+            'body': mt.body,
+            'subject': mt.subject
+        }
+        body_args = {
+            'user':user
+        }
+        mail, nf_keys, nf_args = Mail.build(
+            None,
+            mail_fields,
+            body_args
         )
         self.assertEqual(type(mail), Mail)
         self.assertEqual(nf_keys, [])
@@ -172,14 +181,22 @@ class MailTestCase(TestCase):
         self.assertEqual(type(mail.sent_at), datetime.datetime)
 
         # Test no specify receptor_to
-        mail, nf_keys, nf_args = Mail.build_populate(
-            mail_template = mt,
-            filters = None,
-            user=user # body args
+        mail_fields = {
+            'sender':mt.sender,
+            'body': mt.body,
+            'subject': mt.subject
+        }
+        body_args = {
+            'user':user
+        }
+        mail, nf_keys, nf_args = Mail.build(
+            None,
+            mail_fields,
+            body_args
         )
         self.assertEqual(mail, None)
 
-    def test_build_mail_mode_html(self):
+    def test_build_mail(self):
         link = "http://www.company.com/activation?foo"
         mte = MailTemplateEntity.build(
             token = "ACTIVATION_LINK",
@@ -194,11 +211,20 @@ class MailTestCase(TestCase):
             sender = "Camilo Verdugo <asdf@gmail.com>",
             subject = "Subject emails"
         )
-        mail, nf_keys, nf_args = Mail.build_populate(
-            receptor_to = "User <userr@gmail.com>",
-            mail_template = mt,
-            filters = None,
-            activation_link = link
+
+        mail_fields = {
+            'sender':mt.sender,
+            'receptor_to':"User <userr@gmail.com>",
+            'body': mt.body,
+            'subject': mt.subject
+        }
+        body_args = {
+            'activation_link': link
+        }
+        mail, nf_keys, nf_args = Mail.build(
+            None,
+            mail_fields,
+            body_args
         )
         self.assertEqual(type(mail), Mail)
         self.assertEqual(nf_keys, [])
@@ -208,14 +234,16 @@ class MailTestCase(TestCase):
 
     def test_send(self):
         subject = "Greetings from Awesome Company!"
-        email = Mail.build(
-            sender = "Company No Reply <no-reply@company.com>",
-            receptor_to = "Customer <customer@customer.com>",
-            body = "Hello Dear Customer!",
-            subject = subject,
-            deliver_at = None
+        mail_fields = {
+            'sender': "Company No Reply <no-reply@company.com>",
+            'receptor_to': "Customer <customer@customer.com>",
+            'body': "Hello Dear Customer!",
+            'subject': subject
+        }
+        email, __,__ = Mail.build(
+            None,
+            mail_fields
         )
-
         from django.core.files import File
         f = open("test.txt", "r")
         at = Attachment.objects.create(

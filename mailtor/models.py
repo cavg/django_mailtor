@@ -156,12 +156,6 @@ class Mail(models.Model):
         verbose_name = "Mail"
         verbose_name_plural = "Mails"
 
-    @classmethod
-    def build(self, sender = None, receptor_to = None, receptor_cc = None, receptor_bcc = None, body = None, subject = None,deliver_at = None, sent_at = None, **kwargs):
-        obj = Mail(sender=sender, receptor_to=receptor_to, receptor_cc=receptor_cc, receptor_bcc=receptor_bcc, body=body, subject=subject, deliver_at=deliver_at, sent_at=sent_at, **kwargs)
-        obj.save()
-        return obj
-
     def __str__(self):
         return "Sender:{}, receptor_to:{}, deliver_at:{}, template:{}".format(self.sender, self.receptor_to, self.deliver_at, self.mail_template)
 
@@ -193,52 +187,38 @@ class Mail(models.Model):
 
     """ Replace template body tags for values an create an instance of Mail
     Args:
-        sender (str): who send
-        body (str): mail content
-        subject (str): mail subject
-        receptor (str): destinatary
-        receptor_cc (str): copy to
-        receptor_bcc (str): hide copy to
-        deliver_at (datetime): deliver datetime (without tz)
-        mail_template (MailTemplate) = Mail will build based on this entity, optional param
         filter (array<Q>): using to filter MailTemplateEntities
-        **body_args: All args required to obtain values to replace in email body
+        mail_fields (dict): All args required to obtain values to replace in email body
+        body_args (dict): All args required to obtain values to replace in email body
+    Hint:
+        For deliver_at: deliver_at.astimezone(tz(settings.TIME_ZONE))
     Returns:
-        Mail entity (already created)
-
+        mail (Mail)
+        not_found_keys (array): not found keys in body
+        not_found_args (array): not found replacement params
     """
     @classmethod
-    def build_populate(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, filters = None, **body_args):
-        if deliver_at is not None:
-            deliver_at = deliver_at.astimezone(tz(settings.TIME_ZONE))
+    def build(self, filters = None, mail_fields = {}, body_args = {}):
+        body = None
+        nf_keys = []
+        nt_args = []
 
-        to_send = sender if sender is not None else mail_template.sender
+        if len(['body', 'sender', 'receptor_to', 'subject'] -  mail_fields.keys()) == 0:
+            body, nf_keys, nt_args = Mail.populate_body(mail_fields.get('body'), filters, **body_args)
+            mail_fields['body'] = body
+            if (len(nf_keys) + len(nt_args)) > 0 or body is None:
+                logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))
+                return None, nf_keys, nt_args
+            else:
+                m = Mail(
+                    **mail_fields
+                )
+                m.save()
 
-        subject = subject if subject is not None else mail_template.subject
-
-        body = body if body is not None else mail_template.body
-
-        if None in [to_send, subject, body, receptor_to]:
-            logger.error("Mail require at least to_send, subject, receptor_to and body fields.\nto_send:{},\nsubject:{},\nbody:{},\nreceptor_to:{}".format(to_send, subject, body, receptor_to))
-            return None, [], []
-
-        body, nf_keys, nt_args = Mail.populate_body(body, filters, **body_args)
-
-        if (len(nf_keys) + len(nt_args)) > 0:
-            logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))
-            return None, nf_keys, nt_args
+                return m, nf_keys, nt_args
         else:
-            mail = Mail.build(
-                sender = to_send,
-                receptor_to = receptor_to,
-                receptor_cc = receptor_cc,
-                receptor_bcc = receptor_bcc,
-                body = body,
-                subject = subject,
-                deliver_at = deliver_at
-            )
+            return None, nf_keys, nt_args
 
-            return mail, nf_keys, nt_args
 
     """ Deliver mail
     Args:
