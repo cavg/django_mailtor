@@ -197,7 +197,7 @@ class Mail(models.Model):
                     not_found_keys.append(key.replace(token,""))
         return body, not_found_keys, not_found_args
 
-    """ Replace template body tags for values
+    """ Replace template body tags for values an create an instance of Mail
     Args:
         sender (str): who send
         body (str): mail content
