@@ -12,6 +12,7 @@ django_mailtor.egg-info/top_level.txt
 mailtor/__init__.py
 mailtor/admin.py
 mailtor/apps.py
+mailtor/html_parser.py
 mailtor/models.py
 mailtor/signals.py
 mailtor/tests.py
@@ -28,6 +29,7 @@ mailtor/migrations/0006_auto_20171219_1303.py
 mailtor/migrations/0007_remove_mailtemplateentities_label.py
 mailtor/migrations/0008_auto_20171219_1640.py
 mailtor/migrations/0009_auto_20171219_1846.py
+mailtor/migrations/0010_auto_20171221_1438.py
 mailtor/migrations/__init__.py
 mailtor/migrations/__pycache__/0001_initial.cpython-36.pyc
 mailtor/migrations/__pycache__/0001_squashed_0001_initial.cpython-36.pyc
@@ -39,6 +41,7 @@ mailtor/migrations/__pycache__/0006_auto_20171219_1303.cpython-36.pyc
 mailtor/migrations/__pycache__/0007_remove_mailtemplateentities_label.cpython-36.pyc
 mailtor/migrations/__pycache__/0008_auto_20171219_1640.cpython-36.pyc
 mailtor/migrations/__pycache__/0009_auto_20171219_1846.cpython-36.pyc
+mailtor/migrations/__pycache__/0010_auto_20171221_1438.cpython-36.pyc
 mailtor/migrations/__pycache__/__init__.cpython-36.pyc
 mailtor/templates/_layout.html
 mailtor/templates/create_entity.html

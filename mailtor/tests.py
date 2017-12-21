@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core import mail
 
 from .models import MailTemplateEntity, Mail, MailTemplate, Attachment
+from .html_parser import MyHTMLParser
 
 import datetime
 import shutil
@@ -51,11 +52,11 @@ class MailTemplateEntityTestCase(TestCase):
         # Testing replacement by entity's attr
         first_name = "User1322"
         user = User.objects.get(first_name=first_name)
-        self.assertEqual(mte1.get_replacement(mode_html=False, user=user), user.first_name)
+        self.assertEqual(mte1.get_replacement(user=user), user.first_name)
 
         # Testing replacement by regular param
         mte2 = MailTemplateEntity.get_by_token("AGE")
-        self.assertEqual(mte2.get_replacement(mode_html=False), mte2.arg_name)
+        self.assertEqual(mte2.get_replacement(), mte2.arg_name)
 
     def test_values_by_kind(self):
         # Case IMAGE
@@ -66,9 +67,7 @@ class MailTemplateEntityTestCase(TestCase):
             kind = MailTemplateEntity.IMG_KIND
         )
         img_path = "http://cdn.website.com/image.png"
-        result = mte.get_value_by_kind(img_path, mode_html = False)
-        self.assertEqual(result, img_path)
-        result = mte.get_value_by_kind(img_path, mode_html = True)
+        result = mte.get_value_by_kind(img_path)
         self.assertEqual(result, "<img src='{}' alt='{}'>".format(img_path, img_path))
 
         # Case Date
@@ -112,7 +111,7 @@ class MailTemplateEntityTestCase(TestCase):
             kind = MailTemplateEntity.LINK_KIND
         )
         link = "http://www.company.com/customer/payment"
-        result = mte.get_value_by_kind(link, mode_html=True)
+        result = mte.get_value_by_kind(link)
         self.assertEqual(result, "<a href='{}' target='_blank'>{}</a>".format(link, link))
 
 class MailTestCase(TestCase):
@@ -130,21 +129,21 @@ class MailTestCase(TestCase):
         mte_age = MailTemplateEntity.get_by_token("AGE")
         body= "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, mte_age.token, self.escape)
         age = 32
-        body_populated, _, _ = Mail.populate_body(body=body, mode_html = False, filters = None, user=user, age=age)
+        body_populated, _, _ = Mail.populate_body(body=body, filters = None, user=user, age=age)
         body_expected = "Hello {}, This is an example of populate body email, your age is {}?".format(user.first_name, age)
         self.assertEqual(body_populated, body_expected)
 
         # Testing not found and valid replacement args
         not_found = "NOT_FOUND"
         body = "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, not_found, self.escape)
-        populate_body, nf_keys, _ = Mail.populate_body(body=body, mode_html = False, filters=None, user=user)
+        populate_body, nf_keys, _ = Mail.populate_body(body=body, filters=None, user=user)
         body_expected = "Hello {}, This is an example of populate body email, your age is {}{}{}?".format(user.first_name, self.escape, not_found, self.escape)
         self.assertEqual(body_expected, populate_body)
         self.assertEqual(nf_keys, [not_found])
 
         # Testing not found args
         body = "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, mte_age.token, self.escape)
-        body_populated, _, nf_args = Mail.populate_body(body=body, mode_html = False, filters=None)
+        body_populated, _, nf_args = Mail.populate_body(body=body, filters=None)
         body_expected = "Hello {}{}{}, This is an example of populate body email, your age is {}?".format(self.escape, mte_name.token, self.escape, mte_age.arg_name)
         self.assertEqual(body_expected, body_populated)
         self.assertEqual(nf_args, [mte_name.token])
@@ -161,7 +160,6 @@ class MailTestCase(TestCase):
         mail, nf_keys, nf_args = Mail.build_populate(
             receptor_to = "User <userr@gmail.com>",
             mail_template = mt,
-            mode_html = False,
             filters = None,
             user=user # body args
         )
@@ -176,7 +174,6 @@ class MailTestCase(TestCase):
         # Test no specify receptor_to
         mail, nf_keys, nf_args = Mail.build_populate(
             mail_template = mt,
-            mode_html = False,
             filters = None,
             user=user # body args
         )
@@ -200,7 +197,6 @@ class MailTestCase(TestCase):
         mail, nf_keys, nf_args = Mail.build_populate(
             receptor_to = "User <userr@gmail.com>",
             mail_template = mt,
-            mode_html = True,
             filters = None,
             activation_link = link
         )
@@ -217,7 +213,6 @@ class MailTestCase(TestCase):
             receptor_to = "Customer <customer@customer.com>",
             body = "Hello Dear Customer!",
             subject = subject,
-            mode_html = False,
             deliver_at = None
         )
 
@@ -239,3 +234,31 @@ class MailTestCase(TestCase):
 
         # Cleanning temp directory
         shutil.rmtree(path)
+
+class MyHTMLParserTestCase(TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_plain_parser(self):
+        html = "Welcome User, I hope you enjoy this class"
+        parser = MyHTMLParser()
+        parser.feed(html)
+        self.assertEqual(parser.star_tag,[])
+        self.assertEqual(parser.end_tag,[])
+        self.assertEqual(parser.comments,[])
+        self.assertEqual(parser.data,[html])
+        self.assertEqual(parser.get_plain_text(),html)
+        self.assertEqual(parser.is_html(),False)
+
+    def test_plain_parser(self):
+        html = "Welcome User, <h1>Title</h1> <a href='www.google.com'>google.com</a><!--comment-->"
+        parser = MyHTMLParser()
+        parser.feed(html)
+        self.assertEqual(parser.star_tag,[('href','www.google.com')])
+        self.assertEqual(parser.end_tag,['h1','a'])
+        self.assertEqual(parser.comments,['comment'])
+        self.assertEqual(parser.data,["Welcome User, ","Title"," ","google.com"])
+        self.assertEqual(parser.get_plain_text(),"Welcome User, Title google.com")
+        self.assertEqual(parser.is_html(),True)
+

@@ -3,10 +3,11 @@ from django.apps import apps
 from django.conf import settings
 from django.forms import ModelForm
 from django.utils import timezone
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db.models import Q
 
 from pytz import timezone as tz
+from mailtor.html_parser import MyHTMLParser
 
 import uuid
 import re
@@ -100,25 +101,22 @@ class MailTemplateEntity(models.Model):
         str: value replaced if exist otherwise None
 
     """
-    def get_replacement(self, mode_html, **kwargs):
+    def get_replacement(self, **kwargs):
         if self.instance_attr_name is None:
-            return self.get_value_by_kind(self.arg_name, mode_html)
+            return self.get_value_by_kind(self.arg_name)
         else:
             if self.arg_name is not None:
                 for arg_name, instance in kwargs.items():
                     if arg_name == self.arg_name:
                         value = getattr(instance, self.instance_attr_name)
-                        return self.get_value_by_kind(value, mode_html)
+                        return self.get_value_by_kind(value)
 
 
-    def get_value_by_kind(self, value = None, mode_html = False):
+    def get_value_by_kind(self, value = None):
         if self.kind == MailTemplateEntity.DIRECT_KIND:
             return value
         elif self.kind == MailTemplateEntity.IMG_KIND:
-            if mode_html:
-                return "<img src='{}' alt='{}'>".format(value, value)
-            else:
-                return value
+            return "<img src='{}' alt='{}'>".format(value, value)
         elif self.kind == MailTemplateEntity.DATE_KIND:
             return value.strftime(settings.MAILTOR_DATE_FORMAT)
         elif self.kind == MailTemplateEntity.TIME_KIND:
@@ -126,11 +124,7 @@ class MailTemplateEntity(models.Model):
         elif self.kind == MailTemplateEntity.DATETIME_KIND:
             return value.strftime(settings.MAILTOR_DATETIME_FORMAT)
         elif self.kind == MailTemplateEntity.LINK_KIND:
-            if mode_html:
-                return "<a href='{}' target='_blank'>{}</a>".format(value, value)
-            else:
-                return value
-
+            return "<a href='{}' target='_blank'>{}</a>".format(value, value)
 
     def __str__(self):
         return "Token:{}, arg_name:{}, Kind:{}, instance_attr_name:{}".format(self.token, self.arg_name, self.kind, self.instance_attr_name)
@@ -149,7 +143,7 @@ class Mail(models.Model):
     receptor_bcc = models.CharField(max_length=100, null=True, blank=True)
     body = models.TextField(blank=False, null=False)
     subject = models.CharField(max_length=150, null=False, blank=False)
-    mode_html = models.BooleanField(default=False, null=False, blank=False)
+    mode_html = models.NullBooleanField(default=None, null=True, blank=True)
     deliver_at = models.DateTimeField(blank=True, null=True) # None means at creation moment
     sent_at = models.DateTimeField(blank=True, null=True)
 
@@ -163,8 +157,8 @@ class Mail(models.Model):
         verbose_name_plural = "Mails"
 
     @classmethod
-    def build(self, sender = None, receptor_to = None, receptor_cc = None, receptor_bcc = None, body = None, subject = None, mode_html = None, deliver_at = None, sent_at = None, **kwargs):
-        obj = Mail(sender=sender, receptor_to=receptor_to, receptor_cc=receptor_cc, receptor_bcc=receptor_bcc, body=body, subject=subject, mode_html=mode_html, deliver_at=deliver_at, sent_at=sent_at, **kwargs)
+    def build(self, sender = None, receptor_to = None, receptor_cc = None, receptor_bcc = None, body = None, subject = None,deliver_at = None, sent_at = None, **kwargs):
+        obj = Mail(sender=sender, receptor_to=receptor_to, receptor_cc=receptor_cc, receptor_bcc=receptor_bcc, body=body, subject=subject, deliver_at=deliver_at, sent_at=sent_at, **kwargs)
         obj.save()
         return obj
 
@@ -179,7 +173,7 @@ class Mail(models.Model):
         body populated (str), keys not found in MailTemplateEntity(list), keys not founds in args (list)
     """
     @classmethod
-    def populate_body(self, body, mode_html, filters, **body_args):
+    def populate_body(self, body, filters, **body_args):
         token = MailTemplateEntity.get_escape()
         keys = re.findall("({}+[\w\d.+-]+{})".format(token, token), body)
         not_found_keys = []
@@ -188,7 +182,7 @@ class Mail(models.Model):
         for key in keys:
                 mte = MailTemplateEntity.get_by_token(key.replace(token,""), filters)
                 if mte:
-                    replacement = mte.get_replacement(mode_html, **body_args)
+                    replacement = mte.get_replacement(**body_args)
                     if replacement is not None:
                         body = body.replace(key, str(replacement))
                     else:
@@ -214,7 +208,7 @@ class Mail(models.Model):
 
     """
     @classmethod
-    def build_populate(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, mode_html = False, filters = None, **body_args):
+    def build_populate(self, sender = None, body = None, subject = None, receptor_to = None, receptor_cc =  None, receptor_bcc = None, deliver_at = None, mail_template = None, filters = None, **body_args):
         if deliver_at is not None:
             deliver_at = deliver_at.astimezone(tz(settings.TIME_ZONE))
 
@@ -228,7 +222,7 @@ class Mail(models.Model):
             logger.error("Mail require at least to_send, subject, receptor_to and body fields.\nto_send:{},\nsubject:{},\nbody:{},\nreceptor_to:{}".format(to_send, subject, body, receptor_to))
             return None, [], []
 
-        body, nf_keys, nt_args = Mail.populate_body(body, mode_html, filters, **body_args)
+        body, nf_keys, nt_args = Mail.populate_body(body, filters, **body_args)
 
         if (len(nf_keys) + len(nt_args)) > 0:
             logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))
@@ -241,7 +235,6 @@ class Mail(models.Model):
                 receptor_bcc = receptor_bcc,
                 body = body,
                 subject = subject,
-                mode_html = mode_html,
                 deliver_at = deliver_at
             )
 
@@ -254,15 +247,32 @@ class Mail(models.Model):
         True/False, With True sent_at iis time stamped
     """
     def send(self):
+        parser = MyHTMLParser()
+        parser.feed(self.body)
+        mode_html = parser.is_html()
+
         try:
-            email = EmailMessage(
-                self.subject,
-                self.body,
-                self.sender,
-                [self.receptor_to],
-                [self.receptor_bcc],
-                reply_to=[self.receptor_cc],
-            )
+            if mode_html:
+                email = EmailMultiAlternatives(
+                    self.subject,
+                    parser.get_plain_text(),
+                    self.sender,
+                    [self.receptor_to],
+                    [self.receptor_bcc],
+                    reply_to=[self.receptor_cc],
+                )
+                email.content_subtype = "html"
+                email.attach_alternative(self.body, "text/html")
+            else:
+                email = EmailMessage(
+                    self.subject,
+                    self.body,
+                    self.sender,
+                    [self.receptor_to],
+                    [self.receptor_bcc],
+                    reply_to=[self.receptor_cc],
+                )
+
             attachments = Attachment.objects.filter(mail = self)
             for attachment in attachments:
                 if attachment.attachment is not None:
@@ -271,6 +281,7 @@ class Mail(models.Model):
             email.send()
 
             self.sent_at = datetime.datetime.now().astimezone(tz(settings.TIME_ZONE))
+            self.mode_html = mode_html
             self.save()
             return True
         except Exception as e:

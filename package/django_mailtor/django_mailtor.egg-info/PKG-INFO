@@ -1,11 +1,12 @@
 Metadata-Version: 1.1
 Name: django-mailtor
-Version: 0.0.4
+Version: 0.0.5
 Summary: A Django app 
-Home-page: https://www.example.com/
+Home-page: https://github.com/cavg/django_mailtor/
 Author: Camilo Verdugo
 Author-email: camilo.verdugo@gmail.com
 License: GNU License
+Description-Content-Type: UNKNOWN
 Description: ![Travis Build Test](https://travis-ci.org/cavg/django_mailtor.svg?branch=master)
         
         Django Mailtor
