@@ -212,13 +212,16 @@ class Mail(models.Model):
 
     """ Replace template body tags for values an create an instance of Mail
     Args:
-        filter (array<Q>): using to filter MailTemplateEntities
+        mail_class (Class): Could be parent of Mail
+        entity_class (Class): Could be parent of MailTemplateEntity
+        extra_filters (array<Q>): using to filter entity_class
         mail_fields (dict): All args required to obtain values to replace in email body
         populate_values (dict): All args required to obtain values to replace in email body
-    Hint:
-        For deliver_at: deliver_at.astimezone(tz(settings.TIME_ZONE))
     Returns:
-        mail (Mail): None if not have minimun fields required
+        mail (Mail Instance): - None if not have minimun fields required
+                     - Mail instance:
+                        - error_code is None then build was successfully
+                        - with error_code fail with data to populate, token not founds or both
         not_found_keys (array): not found keys in body
         not_found_args (array): not found replacement params
     """
@@ -260,7 +263,9 @@ class Mail(models.Model):
     Args:
         None
     Returns:
-        True/False, With True sent_at iis time stamped
+        Boolean:
+            - True: field sent_at is stamped with datetime, and mode_html filled according with body data
+            - Else: With throw any exception, usually with email internal delivery, error_code is filled, and error_detail is logged
     """
     def send(self):
         if self.error_code is not None:
