@@ -27,8 +27,8 @@ class MailTemplate(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod
-    def build(self, name, body, sender, subject, **kwargs):
-        obj = MailTemplate(name=name, body=body, sender=sender, subject=subject, **kwargs)
+    def build(self, _class = None, **kwargs):
+        obj = _class(**kwargs)
         obj.save()
         return obj
 
@@ -67,19 +67,28 @@ class MailTemplateEntity(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod
-    def build(self, token, arg_name, instance_attr_name, kind, **kwargs):
-        obj = MailTemplateEntity(token=token, arg_name=arg_name, instance_attr_name=instance_attr_name, kind=kind, **kwargs)
+    def build(self, _class = None, **kwargs):
+        obj = _class(**kwargs)
         obj.save()
         return obj
 
+    """ Get token by token name
+    Args:
+        _class (Class)
+        token (str)
+        filters (array<Q>) extra filters for _class
+    Returns:
+        _class(object)
+
+    """
     @classmethod
-    def get_by_token(self, token, filters = None):
+    def _get_by_token(self, _class, token, extra_filters = []):
         queries = []
         queries.append(Q(token=token))
-        if filters is not None:
-            for f in filters:
+        if extra_filters is not None:
+            for f in extra_filters:
                 queries.append(f)
-        tokens = MailTemplateEntity.objects.filter(*queries)
+        tokens = _class.objects.filter(*queries)
         if tokens.count() == 1:
             return tokens[0]
         else:
@@ -90,7 +99,7 @@ class MailTemplateEntity(models.Model):
         verbose_name_plural = "MailTemplateEntitys"
 
     @classmethod
-    def get_escape(self):
+    def _get_escape(self):
         return getattr(settings, 'MAILTOR_ESCAPE_TOKEN', "###")
 
     """ Obtain replacement values according a instance_attr_name
@@ -101,18 +110,18 @@ class MailTemplateEntity(models.Model):
         str: value replaced if exist otherwise None
 
     """
-    def get_replacement(self, **kwargs):
+    def _get_replacement(self, **kwargs):
         if self.instance_attr_name is None:
-            return self.get_value_by_kind(self.arg_name)
+            return self._get_value_by_kind(self.arg_name)
         else:
             if self.arg_name is not None:
                 for arg_name, instance in kwargs.items():
                     if arg_name == self.arg_name:
                         value = getattr(instance, self.instance_attr_name)
-                        return self.get_value_by_kind(value)
+                        return self._get_value_by_kind(value)
 
 
-    def get_value_by_kind(self, value = None):
+    def _get_value_by_kind(self, value = None):
         if self.kind == MailTemplateEntity.DIRECT_KIND:
             return value
         elif self.kind == MailTemplateEntity.IMG_KIND:
@@ -167,16 +176,16 @@ class Mail(models.Model):
         body populated (str), keys not found in MailTemplateEntity(list), keys not founds in args (list)
     """
     @classmethod
-    def populate_body(self, body, filters, **body_args):
-        token = MailTemplateEntity.get_escape()
+    def _populate_body(self, _class = None, body = '', extra_filters = [], **body_args):
+        token = _class._get_escape()
         keys = re.findall("({}+[\w\d.+-]+{})".format(token, token), body)
         not_found_keys = []
         not_found_args = []
         keys = list(set(keys))
         for key in keys:
-                mte = MailTemplateEntity.get_by_token(key.replace(token,""), filters)
+                mte = _class._get_by_token(_class, key.replace(token,""), extra_filters)
                 if mte:
-                    replacement = mte.get_replacement(**body_args)
+                    replacement = mte._get_replacement(**body_args)
                     if replacement is not None:
                         body = body.replace(key, str(replacement))
                     else:
@@ -198,19 +207,24 @@ class Mail(models.Model):
         not_found_args (array): not found replacement params
     """
     @classmethod
-    def build(self, filters = None, mail_fields = {}, body_args = {}):
+    def build(self, mail_class = None, entity_class = None, extra_filters = [] ,mail_fields = {}, body_args = {}):
         body = None
         nf_keys = []
         nt_args = []
 
         if len(['body', 'sender', 'receptor_to', 'subject'] -  mail_fields.keys()) == 0:
-            body, nf_keys, nt_args = Mail.populate_body(mail_fields.get('body'), filters, **body_args)
+            body, nf_keys, nt_args = mail_class._populate_body(
+                entity_class,
+                mail_fields.get('body'),
+                extra_filters,
+                **body_args
+            )
             mail_fields['body'] = body
             if (len(nf_keys) + len(nt_args)) > 0 or body is None:
                 logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))
                 return None, nf_keys, nt_args
             else:
-                m = Mail(
+                m = mail_class(
                     **mail_fields
                 )
                 m.save()

@@ -13,6 +13,7 @@ def create_template(request):
         sender = request.POST.get('sender', '')
         subject = request.POST.get('subject', '')
         mt = MailTemplate.build(
+            MailTemplate,
             name = name,
             body = body,
             sender = sender,
