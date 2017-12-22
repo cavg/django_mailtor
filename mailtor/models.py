@@ -107,7 +107,7 @@ class MailTemplateEntity(models.Model):
     Args:
         **kwargs (dict): entities to replace
     Returns:
-        str: value replaced if exist otherwise None
+        None: when attr no exist in entity inspection, or attribute not found in body replacement / (str) value replaced
 
     """
     def _get_replacement(self, **kwargs):
@@ -117,8 +117,9 @@ class MailTemplateEntity(models.Model):
             if self.arg_name is not None:
                 for arg_name, instance in kwargs.items():
                     if arg_name == self.arg_name:
-                        value = getattr(instance, self.instance_attr_name)
+                        value = getattr(instance, self.instance_attr_name, None)
                         return self._get_value_by_kind(value)
+        return None
 
 
     def _get_value_by_kind(self, value = None):
@@ -134,6 +135,8 @@ class MailTemplateEntity(models.Model):
             return value.strftime(settings.MAILTOR_DATETIME_FORMAT)
         elif self.kind == MailTemplateEntity.LINK_KIND:
             return "<a href='{}' target='_blank'>{}</a>".format(value, value)
+        else:
+            return None
 
     def __str__(self):
         return "Token:{}, arg_name:{}, Kind:{}, instance_attr_name:{}".format(self.token, self.arg_name, self.kind, self.instance_attr_name)
@@ -145,6 +148,16 @@ class MailTemplateEntityForm(ModelForm):
 
 
 class Mail(models.Model):
+    ERROR_POPULATE = 1
+    ERROR_KEYS = 2
+    ERROR_POPULATE_KEYS = 3
+    ERROR_EMAIL = 4
+    ERROR_CODE_CHOICES = (
+        (ERROR_POPULATE, 'Error en datos de reemplazos'),
+        (ERROR_KEYS, 'Error en valores de reemplazos'),
+        (ERROR_POPULATE_KEYS, 'Error en valores de reemplazos y datos'),
+        (ERROR_EMAIL, 'Error servicio de envió de email')
+    )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     sender = models.CharField(max_length=100, null=False, blank=False)
     receptor_to = models.CharField(max_length=100, null=False, blank=False)
@@ -155,6 +168,8 @@ class Mail(models.Model):
     mode_html = models.NullBooleanField(default=None, null=True, blank=True)
     deliver_at = models.DateTimeField(blank=True, null=True) # None means at creation moment
     sent_at = models.DateTimeField(blank=True, null=True)
+    error_code = models.IntegerField(choices=ERROR_CODE_CHOICES, default=None, null=True, blank=True)
+    error_detail = models.CharField(max_length=200, blank = True, null = True)
 
     mail_template = models.ForeignKey(MailTemplate, on_delete=models.CASCADE, null=True, blank=True)
 
@@ -171,67 +186,74 @@ class Mail(models.Model):
     """ Populate body using params
     Args:
         body(str): Mail body
-        **body_args: All args required to obtain values to replace in email body
+        **populate_values: All args required to obtain values to replace in email body
     Returns:
         body populated (str), keys not found in MailTemplateEntity(list), keys not founds in args (list)
     """
     @classmethod
-    def _populate_body(self, _class = None, body = '', extra_filters = [], **body_args):
+    def _populate_body(self, _class = None, body = '', extra_filters = [], **populate_values):
         token = _class._get_escape()
         keys = re.findall("({}+[\w\d.+-]+{})".format(token, token), body)
-        not_found_keys = []
-        not_found_args = []
+        nf_keys = []
+        nf_values = []
         keys = list(set(keys))
         for key in keys:
                 mte = _class._get_by_token(_class, key.replace(token,""), extra_filters)
-                if mte:
-                    replacement = mte._get_replacement(**body_args)
+                if mte is not None:
+                    replacement = mte._get_replacement(**populate_values)
                     if replacement is not None:
                         body = body.replace(key, str(replacement))
                     else:
-                        not_found_args.append(key.replace(token,""))
+                        nf_values.append(key.replace(token,""))
                 elif mte is None:
-                    not_found_keys.append(key.replace(token,""))
-        return body, not_found_keys, not_found_args
+                    # when not exist as Entity
+                    nf_keys.append(key.replace(token,""))
+        return body, nf_keys, nf_values
 
     """ Replace template body tags for values an create an instance of Mail
     Args:
         filter (array<Q>): using to filter MailTemplateEntities
         mail_fields (dict): All args required to obtain values to replace in email body
-        body_args (dict): All args required to obtain values to replace in email body
+        populate_values (dict): All args required to obtain values to replace in email body
     Hint:
         For deliver_at: deliver_at.astimezone(tz(settings.TIME_ZONE))
     Returns:
-        mail (Mail)
+        mail (Mail): None if not have minimun fields required
         not_found_keys (array): not found keys in body
         not_found_args (array): not found replacement params
     """
     @classmethod
-    def build(self, mail_class = None, entity_class = None, extra_filters = [] ,mail_fields = {}, body_args = {}):
+    def build(self, mail_class = None, entity_class = None, extra_filters = [] ,mail_fields = {}, populate_values = {}):
         body = None
         nf_keys = []
-        nt_args = []
+        nf_args = []
+        mail = None
 
         if len(['body', 'sender', 'receptor_to', 'subject'] -  mail_fields.keys()) == 0:
-            body, nf_keys, nt_args = mail_class._populate_body(
+            body, nf_keys, nf_args = mail_class._populate_body(
                 entity_class,
                 mail_fields.get('body'),
                 extra_filters,
-                **body_args
+                **populate_values
             )
             mail_fields['body'] = body
-            if (len(nf_keys) + len(nt_args)) > 0 or body is None:
-                logger.error("Mail has replacement not populated.\nnf_keys:{},\n nt_args:{}\n".format(nf_keys, nt_args))
-                return None, nf_keys, nt_args
-            else:
-                m = mail_class(
-                    **mail_fields
-                )
-                m.save()
+            mail = mail_class(
+                **mail_fields
+            )
 
-                return m, nf_keys, nt_args
-        else:
-            return None, nf_keys, nt_args
+            if len(nf_keys) > 0 and len(nf_args) == 0:
+                mail.error_code = mail_class.ERROR_KEYS
+                mail.error_detail = ",".join(nf_keys)
+            if len(nf_args) > 0 and len(nf_keys) == 0:
+                mail.error_code = mail_class.ERROR_POPULATE
+                mail.error_detail = ",".join(nf_args)
+            if len(nf_args) > 0 and len(nf_keys) > 0:
+                mail.error_code = mail_class.ERROR_POPULATE_KEYS
+                mail.error_detail = ",".join(nf_args+nf_keys)
+
+            mail.save()
+
+        return mail, nf_keys, nf_args
 
 
     """ Deliver mail
@@ -241,6 +263,9 @@ class Mail(models.Model):
         True/False, With True sent_at iis time stamped
     """
     def send(self):
+        if self.error_code is not None:
+            return False
+
         parser = MyHTMLParser()
         parser.feed(self.body)
         mode_html = parser.is_html()
@@ -280,6 +305,9 @@ class Mail(models.Model):
             return True
         except Exception as e:
             logger.critical("Mail with id:{} couldn't send, {}".format(self.id, str(e)))
+            self.error_code = mail_class.ERROR_EMAIL
+            self.error_detail = str(e)[:199]
+            self.save()
             return False
 
 

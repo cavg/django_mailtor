@@ -50,6 +50,13 @@ MAILTOR_TIME_FORMAT = "%H:%M:%S"
 
 Have you found a bug or got an idea for a new feature? Feel free to use the [issue tracker](https://github.com/cavg/django_mailtor/issues) to let me know. Or make directly a [pull request](https://github.com/cavg/django_mailtor/pulls).
 
+## Changelog
+
+##### 0.0.8
+* Log error tipification in mail instance: fields error_code and error_detail
+* Increase test coverage to email html sender
+* Minor fixes
+
 ## License
 
 This theme is released under the [GPLv2 license](https://github.com/cavg/django_mailtor/blob/master/LICENSE.md) (inherited from the original MH Magazine lite WordPress theme).

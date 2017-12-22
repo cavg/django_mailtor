@@ -13,7 +13,7 @@ admin.site.register(MailTemplate, MailTemplateAdmin)
 
 
 class MailAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'receptor_to', 'subject', 'deliver_at', 'sent_at','created_at', 'updated_at')
+    list_display = ('sender', 'receptor_to', 'subject', 'deliver_at', 'sent_at', 'error_code' ,'created_at', 'updated_at')
 admin.site.register(Mail, MailAdmin)
 
 

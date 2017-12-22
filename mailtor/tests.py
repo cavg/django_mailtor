@@ -55,7 +55,6 @@ class MailTemplateEntityTestCase(TestCase):
         mte1 = MailTemplateEntity._get_by_token(MailTemplateEntity, "NAME")
         self.assertEqual(mte1.arg_name, "user")
 
-
         # Testing MailTemplateEntity with extra_filters
         mte1 = MailTemplateEntity._get_by_token(
             MailTemplateEntity,
@@ -64,14 +63,32 @@ class MailTemplateEntityTestCase(TestCase):
             )
         self.assertEqual(mte1.token, "NAME")
 
-        # Testing replacement by entity's attr
-        first_name = "User1322"
-        user = User.objects.get(first_name=first_name)
-        self.assertEqual(mte1._get_replacement(user=user), user.first_name)
+    def test_get_remplacement(self):
+        user = User.objects.get(first_name="User1322")
 
-        # Testing replacement by regular param
-        mte2 = MailTemplateEntity._get_by_token(MailTemplateEntity, "AGE")
-        self.assertEqual(mte2._get_replacement(), mte2.arg_name)
+        # Testing replacement direct from Entity
+        mte_direct = MailTemplateEntity.build(
+            MailTemplateEntity,
+            token = "BRAND",
+            arg_name = "LeanTech",
+            instance_attr_name = None,
+            kind = MailTemplateEntity.DIRECT_KIND
+        )
+        self.assertEqual(mte_direct._get_replacement(), mte_direct.arg_name)
+
+        # Testing replacement by args
+        mte = MailTemplateEntity.build(
+            MailTemplateEntity,
+            token = "IS_STAFF",
+            arg_name = "user",
+            instance_attr_name = "is_staff",
+            kind = MailTemplateEntity.DIRECT_KIND
+        )
+        self.assertEqual(mte._get_replacement(user=user), user.is_staff)
+
+        # Testing replacement fail because not populate data found
+        self.assertEqual(mte._get_replacement(), None)
+
 
     def test_values_by_kind(self):
         # Case IMAGE
@@ -149,7 +166,7 @@ class MailTestCase(TestCase):
         mte_age = MailTemplateEntity._get_by_token(MailTemplateEntity, "AGE")
         body= "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, mte_age.token, self.escape)
         age = 32
-        body_populated, _, _ = Mail._populate_body(
+        body_populated, nf_keys, nf_args = Mail._populate_body(
             _class=MailTemplateEntity,
             body=body,
             filters=[],
@@ -158,11 +175,13 @@ class MailTestCase(TestCase):
         )
         body_expected = "Hello {}, This is an example of populate body email, your age is {}?".format(user.first_name, age)
         self.assertEqual(body_populated, body_expected)
+        self.assertEqual(nf_keys, [])
+        self.assertEqual(nf_args, [])
 
         # Testing not found and valid replacement args
         not_found = "NOT_FOUND"
         body = "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, not_found, self.escape)
-        populate_body, nf_keys, _ = Mail._populate_body(
+        populate_body, nf_keys, nf_args = Mail._populate_body(
             _class=MailTemplateEntity,
             body=body,
             filters=[],
@@ -171,19 +190,26 @@ class MailTestCase(TestCase):
         body_expected = "Hello {}, This is an example of populate body email, your age is {}{}{}?".format(user.first_name, self.escape, not_found, self.escape)
         self.assertEqual(body_expected, populate_body)
         self.assertEqual(nf_keys, [not_found])
+        self.assertEqual(nf_args, [])
 
         # Testing not found args
-        body = "Hello {}{}{}, This is an example of populate body email, your age is {}{}{}?".format(self.escape, mte_name.token, self.escape, self.escape, mte_age.token, self.escape)
-        body_populated, _, nf_args = Mail._populate_body(
+        nf_keys =[]
+        nf_args =[]
+        body = "Hello {}{}{}, This is an example of populate body email".format(self.escape, mte_name.token, self.escape)
+        body_populated, nf_keys, nf_args = Mail._populate_body(
              _class=MailTemplateEntity,
              body=body,
-             filters=[]
+             filters=[],
+             populate_values ={}
         )
-        body_expected = "Hello {}{}{}, This is an example of populate body email, your age is {}?".format(self.escape, mte_name.token, self.escape, mte_age.arg_name)
+        body_expected = "Hello {}{}{}, This is an example of populate body email".format(self.escape, mte_name.token, self.escape)
         self.assertEqual(body_expected, body_populated)
+        self.assertEqual(nf_keys, [])
         self.assertEqual(nf_args, [mte_name.token])
 
-    def test_build(self):
+
+    def test_build_base_case(self):
+        # Testing replacement successfuly from user entity
         body = "Hello {}NAME{}, This is an example of populate body email".format(self.escape, self.escape)
         mt = MailTemplate.build(
             MailTemplate,
@@ -192,7 +218,6 @@ class MailTestCase(TestCase):
             sender = "Camilo Verdugo <asdf@gmail.com>",
             subject = "Subject emails"
         )
-
         user = User.objects.get(first_name="User1322")
         mail_fields = {
             'sender':mt.sender,
@@ -211,10 +236,11 @@ class MailTestCase(TestCase):
             body_args
         )
         self.assertEqual(type(mail), Mail)
+        self.assertEqual(mail.body, "Hello {}, This is an example of populate body email".format(user.first_name))
         self.assertEqual(nf_keys, [])
         self.assertEqual(nf_args, [])
 
-        # Testing successfull delivery
+        # Testing successfull delivery plain mode
         mail.send()
         self.assertEqual(type(mail.sent_at), datetime.datetime)
 
@@ -237,6 +263,7 @@ class MailTestCase(TestCase):
         self.assertEqual(mail, None)
 
     def test_build_mail(self):
+        # Testing direct replacement without
         link = "http://www.company.com/activation?foo"
         mte = MailTemplateEntity.build(
             MailTemplateEntity,
@@ -260,9 +287,7 @@ class MailTestCase(TestCase):
             'body': mt.body,
             'subject': mt.subject
         }
-        body_args = {
-            'activation_link': link
-        }
+        body_args = {}
         mail, nf_keys, nf_args = Mail.build(
             Mail,
             MailTemplateEntity,
@@ -276,7 +301,98 @@ class MailTestCase(TestCase):
         expected_result = "Hello active your account at <a href='{}' target='_blank'>{}</a>".format(link, link)
         self.assertEqual(mail.body, expected_result)
 
-    def test_send(self):
+    def test_build_mail_error_keys(self):
+        # No data to populate
+        body = "Hello active your account at {}ACTIVATION_LINK{}".format(self.escape, self.escape)
+        mt = MailTemplate.build(
+            MailTemplate,
+            name = "template-email1",
+            body = body,
+            sender = "Camilo Verdugo <asdf@gmail.com>",
+            subject = "Subject emails"
+        )
+        mail_fields = {
+            'sender':mt.sender,
+            'receptor_to':"User <userr@gmail.com>",
+            'body': mt.body,
+            'subject': mt.subject
+        }
+        body_args = {}
+        mail, nf_keys, nf_args = Mail.build(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+        self.assertEqual(type(mail), Mail)
+        self.assertEqual(nf_keys, ['ACTIVATION_LINK'])
+        self.assertEqual(mail.error_code, mail.ERROR_KEYS)
+        self.assertEqual(mail.error_detail, 'ACTIVATION_LINK')
+
+    def test_build_mail_error_args(self):
+        body = "Hello active your account at {}NAME{}".format(self.escape, self.escape)
+        mt = MailTemplate.build(
+            MailTemplate,
+            name = "template-email1",
+            body = body,
+            sender = "Camilo Verdugo <asdf@gmail.com>",
+            subject = "Subject emails"
+        )
+
+        mail_fields = {
+            'sender':mt.sender,
+            'receptor_to':"User <userr@gmail.com>",
+            'body': mt.body,
+            'subject': mt.subject
+        }
+        body_args = {}
+        mail, nf_keys, nf_args = Mail.build(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+
+        self.assertEqual(type(mail), Mail)
+        self.assertEqual(nf_args, ['NAME'])
+        self.assertEqual(mail.error_code, mail.ERROR_POPULATE)
+        self.assertEqual(mail.error_detail, 'NAME')
+
+    def test_build_mail_error_args_and_token(self):
+        body = "Hello active your account at {}NAME{}, if you want to turn off this notification, click here {}SUBSCRIPTION_LINK{}".format(self.escape, self.escape, self.escape, self.escape)
+        mt = MailTemplate.build(
+            MailTemplate,
+            name = "template-email1",
+            body = body,
+            sender = "Camilo Verdugo <asdf@gmail.com>",
+            subject = "Subject emails"
+        )
+
+        mail_fields = {
+            'sender':mt.sender,
+            'receptor_to':"User <userr@gmail.com>",
+            'body': mt.body,
+            'subject': mt.subject
+        }
+        body_args = {}
+        mail, nf_keys, nf_args = Mail.build(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+
+        self.assertEqual(type(mail), Mail)
+        self.assertEqual(nf_args, ['NAME'])
+        self.assertEqual(mail.error_code, mail.ERROR_POPULATE_KEYS)
+        self.assertEqual(nf_keys, ['SUBSCRIPTION_LINK'])
+        self.assertEqual(mail.error_detail, 'NAME,SUBSCRIPTION_LINK')
+
+
+    def test_send_with_attachment(self):
         subject = "Greetings from Awesome Company!"
         mail_fields = {
             'sender': "Company No Reply <no-reply@company.com>",
@@ -309,7 +425,35 @@ class MailTestCase(TestCase):
         # Cleanning temp directory
         shutil.rmtree(path)
 
+    def test_send_mail_html(self):
+        subject = "Greetings from Awesome Company!"
+        mail_fields = {
+            'sender': "Company No Reply <no-reply@company.com>",
+            'receptor_to': "Customer <customer@customer.com>",
+            'body': "Hello Dear Customer!, <h1>Welcome!!!</h1>",
+            'subject': subject
+        }
+        email, __,__ = Mail.build(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields
+        )
+
+        result = email.send()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].body, "Hello Dear Customer!, Welcome!!!")
+        self.assertEqual(mail.outbox[0].alternatives, [('Hello Dear Customer!, <h1>Welcome!!!</h1>', 'text/html')])
+        self.assertEqual(mail.outbox[0].content_subtype, 'html')
+        self.assertEqual(mail.outbox[0].subject, subject)
+        self.assertEqual(result, True)
+
+
 class MyHTMLParserTestCase(TestCase):
+
+    def setUp(self):
+        pass
 
     def test_plain_parser(self):
         html = "Welcome User, I hope you enjoy this class"
@@ -322,7 +466,7 @@ class MyHTMLParserTestCase(TestCase):
         self.assertEqual(parser.get_plain_text(),html)
         self.assertEqual(parser.is_html(),False)
 
-    def test_plain_parser(self):
+    def test_html_parser(self):
         html = "Welcome User, <h1>Title</h1> <a href='www.google.com'>google.com</a><!--comment-->"
         parser = MyHTMLParser()
         parser.feed(html)
