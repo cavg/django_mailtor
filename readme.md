@@ -16,11 +16,13 @@ Features
 
 As WYSIWYG editor mailtor use [Quill](https://quilljs.com/) but you can use whatever you want.
 
-## Usage
+## Installing dependencies
 
-Generate build and install lib
+Just `pipenv install`
 
-`./install.sh`
+## How to install package
+
+`cd package/django_mailtor/ && python3 setup.py sdist`
 
 This will build the package inside of package/django_mailtor/dist directory
 
@@ -56,6 +58,12 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 * Log error tipification in mail instance: fields error_code and error_detail
 * Increase test coverage to email html sender
 * Minor fixes
+
+##### 0.0.9
+* Improve public method comments
+
+##### 0.0.10
+* Fix view call get_escape method was renamed
 
 ## License
 

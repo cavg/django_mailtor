@@ -5,7 +5,7 @@ from .models import MailTemplateEntity, MailTemplate, MailTemplateEntityForm
 
 def create_template(request):
     mtes = MailTemplateEntity.objects.filter()
-    escape = MailTemplateEntity.get_escape()
+    escape = MailTemplateEntity._get_escape()
 
     if request.method == 'POST':
         name = request.POST.get('name', '')
