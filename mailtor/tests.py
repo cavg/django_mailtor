@@ -444,7 +444,7 @@ class MailTestCase(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].body, "Hello Dear Customer!, Welcome!!!")
-        self.assertEqual(mail.outbox[0].alternatives, [('Hello Dear Customer!, <h1>Welcome!!!</h1>', 'text/html')])
+        self.assertEqual(mail.outbox[0].alternatives, [('Hello Dear Customer!, <h1>Welcome!!!</h1>{}'.format(email.get_pixel()), 'text/html')])
         self.assertEqual(mail.outbox[0].content_subtype, 'html')
         self.assertEqual(mail.outbox[0].subject, subject)
         self.assertEqual(result, True)

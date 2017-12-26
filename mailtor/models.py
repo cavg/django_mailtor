@@ -170,6 +170,7 @@ class Mail(models.Model):
     sent_at = models.DateTimeField(blank=True, null=True)
     error_code = models.IntegerField(choices=ERROR_CODE_CHOICES, default=None, null=True, blank=True)
     error_detail = models.CharField(max_length=200, blank = True, null = True)
+    opened_at = models.DateTimeField(default=None, blank=True, null=True)
 
     mail_template = models.ForeignKey(MailTemplate, on_delete=models.CASCADE, null=True, blank=True)
 
@@ -258,6 +259,9 @@ class Mail(models.Model):
 
         return mail, nf_keys, nf_args
 
+    def get_pixel(self):
+        url = "<img src='{}/mailtor/{}/{}' alt=''/>".format(settings.SITE_URL, 'tracking_open', self.id)
+        return url
 
     """ Deliver mail
     Args:
@@ -286,7 +290,9 @@ class Mail(models.Model):
                     reply_to=[self.receptor_cc],
                 )
                 email.content_subtype = "html"
-                email.attach_alternative(self.body, "text/html")
+                body = self.body
+                body += self.get_pixel()
+                email.attach_alternative(body, "text/html")
             else:
                 email = EmailMessage(
                     self.subject,

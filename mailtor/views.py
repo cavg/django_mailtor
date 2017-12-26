@@ -1,5 +1,9 @@
 from django.shortcuts import render, redirect
 from django.forms import modelform_factory
+from django.template import Template, Context
+from django.http import HttpResponse
+from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.utils import timezone
 
 from .models import MailTemplateEntity, MailTemplate, MailTemplateEntityForm
 
@@ -44,3 +48,13 @@ def create_entity(request):
 
 def index(request):
     return render(request, "index.html")
+
+def tracking_open(request, mail_id):
+    static_path = static('/img/pixel.gif')
+    try:
+        mail = Mail.objects.get(id = mail_id)
+        mail.opened_at = timezone.datetime.now()
+        mail.save()
+    except Exception as e:
+        pass
+    return HttpResponse("<img src='{}'/>".format(static_path), content_type="image/gif")

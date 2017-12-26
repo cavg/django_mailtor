@@ -65,6 +65,9 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 ##### 0.0.10
 * Fix view call get_escape method was renamed
 
+##### 0.0.11
+* Include hide pixel to track open email
+
 ## License
 
 This theme is released under the [GPLv2 license](https://github.com/cavg/django_mailtor/blob/master/LICENSE.md) (inherited from the original MH Magazine lite WordPress theme).

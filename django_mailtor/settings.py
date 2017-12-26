@@ -25,8 +25,9 @@ SECRET_KEY = '&9j65_z@2%=b(pt+i63#*j#e3!)28_i!ed6mduexk66#)xqfll'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost"]
 
+SITE_URL = 'http://{}'.format(ALLOWED_HOSTS[0])
 
 # Application definition
 
