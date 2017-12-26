@@ -57,6 +57,7 @@ mailtor/migrations/__pycache__/0015_auto_20171222_1741.cpython-36.pyc
 mailtor/migrations/__pycache__/0016_auto_20171222_2002.cpython-36.pyc
 mailtor/migrations/__pycache__/0017_mail_opened_at.cpython-36.pyc
 mailtor/migrations/__pycache__/__init__.cpython-36.pyc
+mailtor/statics/img/pixel.gif
 mailtor/templates/_layout.html
 mailtor/templates/create_entity.html
 mailtor/templates/create_template.html

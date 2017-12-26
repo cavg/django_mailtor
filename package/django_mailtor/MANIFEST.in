@@ -5,3 +5,4 @@ recursive-include mailtor/fixtures *
 recursive-include mailtor/migrations *
 recursive-include mailtor/templates *
 recursive-include mailtor/docs *
+recursive-include mailtor/statics/img *
