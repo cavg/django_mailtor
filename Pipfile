@@ -10,7 +10,7 @@ name = "pypi"
 django = "==2.0"
 coverage = "==4.4.1"
 ipdb = "==0.10.3"
-"2f4e325" = {path = "./dependencies/django_toolbox-0.3.1.tar.gz"}
+"1be6208" = {path = "./mailtor/dependencies/django_toolbox-0.3.1.tar.gz"}
 
 
 [dev-packages]

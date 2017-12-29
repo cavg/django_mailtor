@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5ea87b219a24e36d29fad89ab4b4d8847688b6e1ec8ea92fc480e99db283cfba"
+            "sha256": "d0b0ef75c485ffd4efe7442617deeb074f6f174e62be62782940a53407942c94"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -27,8 +27,8 @@
         ]
     },
     "default": {
-        "2f4e325": {
-            "path": "./dependencies/django_toolbox-0.3.1.tar.gz"
+        "1be6208": {
+            "path": "./mailtor/dependencies/django_toolbox-0.3.1.tar.gz"
         },
         "appnope": {
             "hashes": [
