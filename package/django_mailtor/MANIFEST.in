@@ -1,6 +1,7 @@
 include LICENSE.md
 include readme.md
 include requirements.txt
+recursive-include mailtor/dependencies *
 recursive-include mailtor/fixtures *
 recursive-include mailtor/migrations *
 recursive-include mailtor/templates *

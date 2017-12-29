@@ -6,7 +6,7 @@ from django.core.files import File
 from django.db.models import Q
 
 from .models import MailTemplateEntity, Mail, MailTemplate, Attachment
-from .html_parser import MyHTMLParser
+from toolbox.html_parser import MyHTMLParser
 
 import datetime
 import shutil

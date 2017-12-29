@@ -7,7 +7,7 @@ from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.db.models import Q
 
 from pytz import timezone as tz
-from mailtor.html_parser import MyHTMLParser
+from toolbox.html_parser import MyHTMLParser
 
 import uuid
 import re
@@ -292,6 +292,7 @@ class Mail(models.Model):
                 email.content_subtype = "html"
                 body = self.body
                 body += self.get_pixel()
+                # TODO: Always send html emails to track if it is opened
                 email.attach_alternative(body, "text/html")
             else:
                 email = EmailMessage(

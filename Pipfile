@@ -9,8 +9,8 @@ name = "pypi"
 
 django = "==2.0"
 coverage = "==4.4.1"
-htmlparser = "==0.0.2"
 ipdb = "==0.10.3"
+"2f4e325" = {path = "./dependencies/django_toolbox-0.3.1.tar.gz"}
 
 
 [dev-packages]

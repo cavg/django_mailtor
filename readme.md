@@ -7,12 +7,13 @@ Django App mailer to handle emails with templates oriented to reutilization and 
 
 ![Screenshot](https://image.ibb.co/icaEum/Screen_Shot_2017_12_19_at_3_18_36_PM.png)
 
-Features
+Features:
 * Build templates and token by types (img, a, text, date, datetime, time)
 * Populate by vars and python object
 * Deliver on scheduled
 * Log mails and sent timestamp
 * Support file attachment
+* Opened email tracker
 
 As WYSIWYG editor mailtor use [Quill](https://quilljs.com/) but you can use whatever you want.
 
@@ -54,19 +55,23 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.12
+* Move MyHTMLParser to django_toolbox dependency
+
+##### 0.0.11
+* Include hide pixel to track open email
+
+##### 0.0.10
+* Fix view call get_escape method was renamed
+
+##### 0.0.9
+* Improve public method comments
+
 ##### 0.0.8
 * Log error tipification in mail instance: fields error_code and error_detail
 * Increase test coverage to email html sender
 * Minor fixes
 
-##### 0.0.9
-* Improve public method comments
-
-##### 0.0.10
-* Fix view call get_escape method was renamed
-
-##### 0.0.11
-* Include hide pixel to track open email
 
 ## License
 

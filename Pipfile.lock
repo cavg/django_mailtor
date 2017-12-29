@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "360390d8fb7c9abdeca2fcf6c6ea2100744877a90767f5ddfdb828846d84147c"
+            "sha256": "5ea87b219a24e36d29fad89ab4b4d8847688b6e1ec8ea92fc480e99db283cfba"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -27,6 +27,9 @@
         ]
     },
     "default": {
+        "2f4e325": {
+            "path": "./dependencies/django_toolbox-0.3.1.tar.gz"
+        },
         "appnope": {
             "hashes": [
                 "sha256:5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0",
@@ -97,12 +100,6 @@
                 "sha256:9614851d4a7ff8cbd32b73c6076441f377c45a5bbff7e771798fb02c43c31f47"
             ],
             "version": "==2.0"
-        },
-        "htmlparser": {
-            "hashes": [
-                "sha256:c5681d3d8642767739e4c08b1b19b3ff44263280ff1923b1c5424052bedb2087"
-            ],
-            "version": "==0.0.2"
         },
         "ipdb": {
             "hashes": [
