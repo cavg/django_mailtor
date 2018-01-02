@@ -227,7 +227,7 @@ class Mail(models.Model):
         not_found_args (array): not found replacement params
     """
     @classmethod
-    def build(self, mail_class = None, entity_class = None, extra_filters = [] ,mail_fields = {}, populate_values = {}):
+    def build(self, mail_class = None, entity_class = None, extra_filters = [], mail_fields = {}, populate_values = {}):
         body = None
         nf_keys = []
         nf_args = []
@@ -263,15 +263,65 @@ class Mail(models.Model):
         url = "<img src='{}/mailtor/{}/{}' alt=''/>".format(settings.SITE_URL, 'tracking_open', self.id)
         return url
 
+    """ Used to try again populate mail if exists any error happened
+
+        Args:
+            mail_class (Class): Could be parent of Mail
+            entity_class (Class): Could be parent of MailTemplateEntity
+            extra_filters (array<Q>): using to filter entity_class
+            mail_fields (dict): All args required to obtain values to replace in email body
+            populate_values (dict): All args required to obtain values to replace in email body
+        Returns:
+            boolean:
+                - True: If error is fixed, then error_code and error_details are setted to None
+                - False: If exist any populate error
+
+    """
+    def try_again_populate(self, mail_class = None, entity_class = None, extra_filters = [], mail_fields = {}, populate_values = {}):
+        body, nf_keys, nf_args = mail_class._populate_body(
+                entity_class,
+                mail_fields.get('body'),
+                extra_filters,
+                **populate_values
+        )
+        self.body = body
+
+        if len(nf_keys) > 0 and len(nf_args) == 0:
+            self.error_code = mail_class.ERROR_KEYS
+            self.error_detail = ",".join(nf_keys)
+        elif len(nf_args) > 0 and len(nf_keys) == 0:
+            self.error_code = mail_class.ERROR_POPULATE
+            self.error_detail = ",".join(nf_args)
+        elif len(nf_args) > 0 and len(nf_keys) > 0:
+            self.error_code = mail_class.ERROR_POPULATE_KEYS
+            self.error_detail = ",".join(nf_args+nf_keys)
+        else:
+            self.error_code = None
+            self.error_detail = None
+
+        self.save()
+
+        if self.error_code is None:
+            return True
+        else:
+            return False
+
     """ Deliver mail
     Args:
         None
     Returns:
         Boolean:
             - True: field sent_at is stamped with datetime, and mode_html filled according with body data
-            - Else: With throw any exception, usually with email internal delivery, error_code is filled, and error_detail is logged
+            - False: With throw any exception, usually with email internal delivery, error_code is filled, and error_detail is logged, other causes are already sent or deliver_at is later (scheduled)
     """
     def send(self):
+        if self.sent_at is not None:
+            return True
+
+        if self.deliver_at is not None:
+            if self.deliver_at > timezone.now():
+                return False
+
         if self.error_code is not None:
             return False
 

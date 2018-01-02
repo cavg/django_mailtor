@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: django-mailtor
-Version: 0.0.12
+Version: 0.0.13
 Summary: A Django app 
 Home-page: https://github.com/cavg/django_mailtor/
 Author: Camilo Verdugo
@@ -63,6 +63,11 @@ Description: ![Travis Build Test](https://travis-ci.org/cavg/django_mailtor.svg?
         Have you found a bug or got an idea for a new feature? Feel free to use the [issue tracker](https://github.com/cavg/django_mailtor/issues) to let me know. Or make directly a [pull request](https://github.com/cavg/django_mailtor/pulls).
         
         ## Changelog
+        
+        ##### 0.0.13
+        * try again fix error populate with method Mail.try_again_populate
+        * prevent send scheduled emails
+        * prevent send again emails already sent
         
         ##### 0.0.12
         * Move MyHTMLParser to django_toolbox dependency

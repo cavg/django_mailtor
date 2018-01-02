@@ -55,6 +55,11 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.13
+* try again fix error populate with method Mail.try_again_populate
+* prevent send scheduled emails
+* prevent send again emails already sent
+
 ##### 0.0.12
 * Move MyHTMLParser to django_toolbox dependency
 

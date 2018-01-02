@@ -8,6 +8,7 @@ from django.db.models import Q
 from .models import MailTemplateEntity, Mail, MailTemplate, Attachment
 from toolbox.html_parser import MyHTMLParser
 
+from pytz import timezone as tz
 import datetime
 import shutil
 
@@ -330,6 +331,17 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.error_code, mail.ERROR_KEYS)
         self.assertEqual(mail.error_detail, 'ACTIVATION_LINK')
 
+        res = mail.try_again_populate(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+        self.assertEqual(res, False)
+        self.assertEqual(mail.error_code, mail.ERROR_KEYS)
+        self.assertEqual(mail.error_detail, 'ACTIVATION_LINK')
+
     def test_build_mail_error_args(self):
         body = "Hello active your account at {}NAME{}".format(self.escape, self.escape)
         mt = MailTemplate.build(
@@ -360,6 +372,36 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.error_code, mail.ERROR_POPULATE)
         self.assertEqual(mail.error_detail, 'NAME')
 
+        # Try again without changes
+        res = mail.try_again_populate(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+        self.assertEqual(res, False)
+        self.assertEqual(mail.error_code, mail.ERROR_POPULATE)
+        self.assertEqual(mail.error_detail, 'NAME')
+
+        # Try again fix success
+        mail_fields = {
+            'sender':mt.sender,
+            'receptor_to':"User <userr@gmail.com>",
+            'body': "Hello active your account...",
+            'subject': mt.subject
+        }
+        res = mail.try_again_populate(
+            Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+        self.assertEqual(res, True)
+        self.assertEqual(mail.error_code, None)
+        self.assertEqual(mail.error_detail, None)
+
     def test_build_mail_error_args_and_token(self):
         body = "Hello active your account at {}NAME{}, if you want to turn off this notification, click here {}SUBSCRIPTION_LINK{}".format(self.escape, self.escape, self.escape, self.escape)
         mt = MailTemplate.build(
@@ -389,6 +431,18 @@ class MailTestCase(TestCase):
         self.assertEqual(nf_args, ['NAME'])
         self.assertEqual(mail.error_code, mail.ERROR_POPULATE_KEYS)
         self.assertEqual(nf_keys, ['SUBSCRIPTION_LINK'])
+        self.assertEqual(mail.error_detail, 'NAME,SUBSCRIPTION_LINK')
+
+         # Try again without changes
+        res = mail.try_again_populate(
+             Mail,
+            MailTemplateEntity,
+            None,
+            mail_fields,
+            body_args
+        )
+        self.assertEqual(res, False)
+        self.assertEqual(mail.error_code, mail.ERROR_POPULATE_KEYS)
         self.assertEqual(mail.error_detail, 'NAME,SUBSCRIPTION_LINK')
 
 
@@ -449,6 +503,43 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.outbox[0].subject, subject)
         self.assertEqual(result, True)
 
+    def test_scheduled_deliver_at(self):
+        # Test succes delivery
+        m = Mail.objects.create(
+            sender = "no-reply@company.com",
+            receptor_to = "user@customer.com",
+            body = "Hello dear customer!!",
+            subject = "Welcome to Company",
+            deliver_at = None
+        )
+        res = m.send()
+        self.assertEqual(res, True)
+        self.assertIsNotNone(m.sent_at)
+
+        # Test prevent delivery by deliver_At scheduled
+        m = Mail.objects.create(
+            sender = "no-reply@company.com",
+            receptor_to = "user@customer.com",
+            body = "Hello dear customer!!",
+            subject = "Welcome to Company",
+            deliver_at = datetime.datetime.now().astimezone(tz(settings.TIME_ZONE)) + datetime.timedelta(days=1)
+        )
+        res = m.send()
+        self.assertEqual(res, False)
+        self.assertIsNone(m.sent_at)
+
+        # Prevent delivery because it has errors
+        m = Mail.objects.create(
+            sender = "no-reply@company.com",
+            receptor_to = "user@customer.com",
+            body = "Hello dear customer!!",
+            subject = "Welcome to Company",
+            deliver_at = None,
+            error_code = Mail.ERROR_KEYS
+        )
+        res = m.send()
+        self.assertEqual(res, False)
+        self.assertIsNone(m.sent_at)
 
 class MyHTMLParserTestCase(TestCase):
 
