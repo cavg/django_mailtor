@@ -21,9 +21,9 @@ As WYSIWYG editor mailtor use [Quill](https://quilljs.com/) but you can use what
 
 Just `pipenv install`
 
-## How to install package
+## How to build package
 
-`cd package/django_mailtor/ && python3 setup.py sdist`
+`./build.sh`
 
 This will build the package inside of package/django_mailtor/dist directory
 
@@ -55,6 +55,12 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.15
+* upgrade dependency toolbox
+
+##### 0.0.14
+* switch index from / to home/
+
 ##### 0.0.13
 * try again fix error populate with method Mail.try_again_populate
 * prevent send scheduled emails
@@ -73,7 +79,7 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 * Improve public method comments
 
 ##### 0.0.8
-* Log error tipification in mail instance: fields error_code and error_detail
+* Log error classification in mail instance into fields error_code and error_detail
 * Increase test coverage to email html sender
 * Minor fixes
 

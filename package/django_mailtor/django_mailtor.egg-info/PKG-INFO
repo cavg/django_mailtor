@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: django-mailtor
-Version: 0.0.13
+Version: 0.0.15
 Summary: A Django app 
 Home-page: https://github.com/cavg/django_mailtor/
 Author: Camilo Verdugo
@@ -30,9 +30,9 @@ Description: ![Travis Build Test](https://travis-ci.org/cavg/django_mailtor.svg?
         
         Just `pipenv install`
         
-        ## How to install package
+        ## How to build package
         
-        `cd package/django_mailtor/ && python3 setup.py sdist`
+        `./build.sh`
         
         This will build the package inside of package/django_mailtor/dist directory
         
@@ -64,6 +64,12 @@ Description: ![Travis Build Test](https://travis-ci.org/cavg/django_mailtor.svg?
         
         ## Changelog
         
+        ##### 0.0.15
+        * upgrade dependency toolbox
+        
+        ##### 0.0.14
+        * switch index from / to home/
+        
         ##### 0.0.13
         * try again fix error populate with method Mail.try_again_populate
         * prevent send scheduled emails
@@ -82,7 +88,7 @@ Description: ![Travis Build Test](https://travis-ci.org/cavg/django_mailtor.svg?
         * Improve public method comments
         
         ##### 0.0.8
-        * Log error tipification in mail instance: fields error_code and error_detail
+        * Log error classification in mail instance into fields error_code and error_detail
         * Increase test coverage to email html sender
         * Minor fixes
         

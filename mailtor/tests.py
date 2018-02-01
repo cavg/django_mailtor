@@ -331,6 +331,8 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.error_code, mail.ERROR_KEYS)
         self.assertEqual(mail.error_detail, 'ACTIVATION_LINK')
 
+        # Try again without changes
+        mail = Mail.objects.get(id=mail.id)
         res = mail.try_again_populate(
             Mail,
             MailTemplateEntity,
@@ -373,6 +375,7 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.error_detail, 'NAME')
 
         # Try again without changes
+        mail = Mail.objects.get(id=mail.id)
         res = mail.try_again_populate(
             Mail,
             MailTemplateEntity,
@@ -391,6 +394,7 @@ class MailTestCase(TestCase):
             'body': "Hello active your account...",
             'subject': mt.subject
         }
+        mail = Mail.objects.get(id=mail.id)
         res = mail.try_again_populate(
             Mail,
             MailTemplateEntity,
@@ -434,6 +438,7 @@ class MailTestCase(TestCase):
         self.assertEqual(mail.error_detail, 'NAME,SUBSCRIPTION_LINK')
 
          # Try again without changes
+        mail = Mail.objects.get(id=mail.id)
         res = mail.try_again_populate(
              Mail,
             MailTemplateEntity,

@@ -11,6 +11,7 @@ django = "==2.0"
 coverage = "==4.4.1"
 ipdb = "==0.10.3"
 "1be6208" = {path = "./mailtor/dependencies/django_toolbox-0.3.1.tar.gz"}
+"8e0e3bb" = {path = "./../django_toolbox/package/django_toolbox/dist/django_toolbox-0.4.0.tar.gz"}
 
 
 [dev-packages]
