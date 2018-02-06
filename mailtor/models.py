@@ -171,7 +171,7 @@ class Mail(models.Model):
     deliver_at = models.DateTimeField(blank=True, null=True) # None means at creation moment
     sent_at = models.DateTimeField(blank=True, null=True)
     error_code = models.IntegerField(choices=ERROR_CODE_CHOICES, default=None, null=True, blank=True)
-    error_detail = models.CharField(max_length=200, blank = True, null = True)
+    error_detail = models.CharField(max_length=500, blank = True, null = True)
     opened_at = models.DateTimeField(default=None, blank=True, null=True)
 
     mail_template = models.ForeignKey(MailTemplate, on_delete=models.CASCADE, null=True, blank=True)
@@ -370,7 +370,7 @@ class Mail(models.Model):
         except Exception as e:
             logger.critical("Mail with id:{} couldn't send, {}".format(self.id, str(e)))
             self.error_code = self.ERROR_EMAIL
-            self.error_detail = str(e)[:199]
+            self.error_detail = str(e)[:499]
             self.save()
             return False
 
