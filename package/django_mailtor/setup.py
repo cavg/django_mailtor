@@ -1,7 +1,7 @@
 import os
 from setuptools import find_packages, setup
 
-with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
+with open(os.path.join(os.path.dirname(__file__), 'readme.md')) as readme:
     README = readme.read()
 
 # allow setup.py to be run from any path
@@ -13,7 +13,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='django_mailtor',
-    version='0.0.15',
+    version='0.0.16',
     packages=find_packages(),
     include_package_data=True,
     license='GNU License',

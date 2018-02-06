@@ -8,12 +8,14 @@ from django.db.models import Q
 
 from pytz import timezone as tz
 from toolbox.html_parser import MyHTMLParser
+import locale
 
 import uuid
 import re
 import datetime
 import logging
 
+locale.setlocale(locale.LC_ALL, 'es_ES')
 logger = logging.getLogger(__name__)
 
 class MailTemplate(models.Model):
