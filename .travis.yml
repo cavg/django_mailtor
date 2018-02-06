@@ -8,14 +8,16 @@ dist: trusty
 env:
   global:
     - BUILD_ON_TRAVIS=true
-    - LC_ALL=en_US.UTF-8
+    - LC_ALL=es_ES.UTF-8
     - LC_CTYPE=UTF-8
 
 install:
+  - locale-gen es_ES.UTF-8
   - pip3 install pipenv
   - pipenv install
 
 script:
+  - update-locale
   - python3 manage.py migrate -v 3
   - python3 manage.py loaddata mail_template_entity
   - python3 manage.py test -v 3
