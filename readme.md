@@ -55,6 +55,9 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.19
+* fix tracking_open
+
 ##### 0.0.15
 * upgrade dependency toolbox
 
