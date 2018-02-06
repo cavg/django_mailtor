@@ -8,6 +8,8 @@ dist: trusty
 env:
   global:
     - BUILD_ON_TRAVIS=true
+    - LC_ALL=en_US.UTF-8
+    - LC_CTYPE=UTF-8
 
 install:
   - pip3 install pipenv
