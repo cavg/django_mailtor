@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.utils import timezone
 
-from .models import MailTemplateEntity, MailTemplate, MailTemplateEntityForm
+from .models import MailTemplateEntity, MailTemplate, MailTemplateEntityForm, Mail
 
 def create_template(request):
     mtes = MailTemplateEntity.objects.filter()

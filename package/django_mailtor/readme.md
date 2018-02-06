@@ -55,9 +55,6 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
-##### 0.0.17
-* fix url for upgrade
-
 ##### 0.0.15
 * upgrade dependency toolbox
 
