@@ -369,7 +369,7 @@ class Mail(models.Model):
             return True
         except Exception as e:
             logger.critical("Mail with id:{} couldn't send, {}".format(self.id, str(e)))
-            self.error_code = mail_class.ERROR_EMAIL
+            self.error_code = self.ERROR_EMAIL
             self.error_detail = str(e)[:199]
             self.save()
             return False
