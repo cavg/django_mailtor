@@ -55,6 +55,9 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.24
+* to param as array
+
 ##### 0.0.23
 * fix bug sending html emails and plain text
 

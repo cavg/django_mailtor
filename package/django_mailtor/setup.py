@@ -13,7 +13,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='django_mailtor',
-    version='0.0.23',
+    version='0.0.24',
     packages=find_packages(),
     include_package_data=True,
     license='GNU License',

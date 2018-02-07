@@ -337,7 +337,7 @@ class Mail(models.Model):
                     subject = self.subject,
                     body = parser.get_plain_text(),
                     from_email = self.sender,
-                    to = self.receptor_to,
+                    to = [self.receptor_to],
                     bcc = self.receptor_bcc,
                     reply_to=self.receptor_cc
                 )
@@ -351,7 +351,7 @@ class Mail(models.Model):
                     subject = self.subject,
                     body = self.body,
                     from_email = self.sender,
-                    to = self.receptor_to,
+                    to = [self.receptor_to],
                     bcc = self.receptor_bcc,
                     reply_to=self.receptor_cc
                 )
