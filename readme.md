@@ -55,6 +55,9 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.25
+* naive tz mail sent_at
+
 ##### 0.0.24
 * to param as array
 

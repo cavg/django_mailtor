@@ -363,7 +363,7 @@ class Mail(models.Model):
 
             email.send()
 
-            self.sent_at = datetime.datetime.now().astimezone(tz(settings.TIME_ZONE))
+            self.sent_at = timezone.now()
             self.mode_html = mode_html
             self.save()
             return True
