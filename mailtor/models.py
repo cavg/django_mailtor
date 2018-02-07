@@ -348,12 +348,12 @@ class Mail(models.Model):
                 email.attach_alternative(body, "text/html")
             else:
                 email = EmailMessage(
-                    self.subject,
-                    self.body,
-                    self.sender,
-                    [self.receptor_to],
-                    [self.receptor_bcc],
-                    reply_to=[self.receptor_cc],
+                    subject = self.subject,
+                    body = self.body,
+                    from_email = self.sender,
+                    to = self.receptor_to,
+                    bcc = self.receptor_bcc,
+                    reply_to=self.receptor_cc
                 )
 
             attachments = Attachment.objects.filter(mail = self)

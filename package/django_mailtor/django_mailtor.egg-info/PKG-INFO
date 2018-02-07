@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: django-mailtor
-Version: 0.0.21
+Version: 0.0.22
 Summary: A Django app 
 Home-page: https://github.com/cavg/django_mailtor/
 Author: Camilo Verdugo
@@ -63,6 +63,9 @@ Description: ![Travis Build Test](https://travis-ci.org/cavg/django_mailtor.svg?
         Have you found a bug or got an idea for a new feature? Feel free to use the [issue tracker](https://github.com/cavg/django_mailtor/issues) to let me know. Or make directly a [pull request](https://github.com/cavg/django_mailtor/pulls).
         
         ## Changelog
+        
+        ##### 0.0.22
+        * fix bug sending html emails
         
         ##### 0.0.21
         * increase size error log

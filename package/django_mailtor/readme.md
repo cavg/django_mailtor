@@ -55,6 +55,9 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.22
+* fix bug sending html emails
+
 ##### 0.0.21
 * increase size error log
 
