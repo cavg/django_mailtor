@@ -334,12 +334,12 @@ class Mail(models.Model):
         try:
             if mode_html:
                 email = EmailMultiAlternatives(
-                    self.subject,
-                    parser.get_plain_text(),
-                    self.sender,
-                    [self.receptor_to],
-                    [self.receptor_bcc],
-                    reply_to=[self.receptor_cc],
+                    subject = self.subject,
+                    body = parser.get_plain_text(),
+                    from_email = self.sender,
+                    to = self.receptor_to,
+                    bcc = self.receptor_bcc,
+                    reply_to=self.receptor_cc
                 )
                 email.content_subtype = "html"
                 body = self.body
