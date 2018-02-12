@@ -161,18 +161,19 @@ class Mail(models.Model):
         (ERROR_EMAIL, 'Error servicio de envió de email')
     )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    sender = models.CharField(max_length=100, null=False, blank=False)
-    receptor_to = models.CharField(max_length=100, null=False, blank=False)
-    receptor_cc = models.CharField(max_length=100, null=True, blank=True)
-    receptor_bcc = models.CharField(max_length=100, null=True, blank=True)
-    body = models.TextField(blank=False, null=False)
-    subject = models.CharField(max_length=150, null=False, blank=False)
+    sender = models.CharField(max_length=100, null=False, blank=False, verbose_name='Remitente')
+    receptor_to = models.CharField(max_length=100, null=False, blank=False, verbose_name='Destinatario (To)')
+    receptor_cc = models.CharField(max_length=100, null=True, blank=True, verbose_name='Destinatario en copia (CC)')
+    receptor_bcc = models.CharField(max_length=100, null=True, blank=True, verbose_name='Copia oculta (BCC)')
+    body = models.TextField(blank=False, null=False, verbose_name="Mensaje")
+    subject = models.CharField(max_length=150, null=False, blank=False, verbose_name='Asunto')
     mode_html = models.NullBooleanField(default=None, null=True, blank=True)
-    deliver_at = models.DateTimeField(blank=True, null=True) # None means at creation moment
-    sent_at = models.DateTimeField(blank=True, null=True)
+    deliver_at = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de envio programada") # None means at creation moment
+    sent_at = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de envio")
     error_code = models.IntegerField(choices=ERROR_CODE_CHOICES, default=None, null=True, blank=True)
     error_detail = models.CharField(max_length=500, blank = True, null = True)
-    opened_at = models.DateTimeField(default=None, blank=True, null=True)
+    opened_at = models.DateTimeField(default=None, blank=True, null=True, verbose_name="Aperturado (Fecha)")
+    opened_at_last = models.DateTimeField(default=None, blank=True, null=True, verbose_name="Última apertura (Fecha)")
 
     mail_template = models.ForeignKey(MailTemplate, on_delete=models.CASCADE, null=True, blank=True)
 

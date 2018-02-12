@@ -49,6 +49,7 @@ mailtor/migrations/0015_auto_20171222_1741.py
 mailtor/migrations/0016_auto_20171222_2002.py
 mailtor/migrations/0017_mail_opened_at.py
 mailtor/migrations/0018_auto_20180206_2128.py
+mailtor/migrations/0019_auto_20180212_1745.py
 mailtor/migrations/__init__.py
 mailtor/migrations/__pycache__/0001_initial.cpython-36.pyc
 mailtor/migrations/__pycache__/0001_squashed_0001_initial.cpython-36.pyc
@@ -69,6 +70,7 @@ mailtor/migrations/__pycache__/0015_auto_20171222_1741.cpython-36.pyc
 mailtor/migrations/__pycache__/0016_auto_20171222_2002.cpython-36.pyc
 mailtor/migrations/__pycache__/0017_mail_opened_at.cpython-36.pyc
 mailtor/migrations/__pycache__/0018_auto_20180206_2128.cpython-36.pyc
+mailtor/migrations/__pycache__/0019_auto_20180212_1745.cpython-36.pyc
 mailtor/migrations/__pycache__/__init__.cpython-36.pyc
 mailtor/statics/img/pixel.gif
 mailtor/templates/_layout.html
