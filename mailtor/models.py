@@ -339,8 +339,8 @@ class Mail(models.Model):
                     body = parser.get_plain_text(),
                     from_email = self.sender,
                     to = [self.receptor_to],
-                    bcc = self.receptor_bcc,
-                    reply_to=self.receptor_cc
+                    bcc = [self.receptor_bcc],
+                    reply_to=[self.receptor_cc]
                 )
                 email.content_subtype = "html"
                 body = self.body
