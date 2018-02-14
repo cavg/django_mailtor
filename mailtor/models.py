@@ -317,11 +317,11 @@ class Mail(models.Model):
             - True: field sent_at is stamped with datetime, and mode_html filled according with body data
             - False: With throw any exception, usually with email internal delivery, error_code is filled, and error_detail is logged, other causes are already sent or deliver_at is later (scheduled)
     """
-    def send(self):
+    def send(self, ignore_deliver = False):
         if self.sent_at is not None:
             return True
 
-        if self.deliver_at is not None:
+        if not ignore_deliver and self.deliver_at is not None:
             if self.deliver_at > timezone.now():
                 return False
 
