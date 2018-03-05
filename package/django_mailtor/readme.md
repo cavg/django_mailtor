@@ -55,9 +55,6 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
-##### 0.0.29
-* send html with body in html text
-
 ##### 0.0.28
 * fix bcc, cc
 
