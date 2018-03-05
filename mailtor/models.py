@@ -336,7 +336,7 @@ class Mail(models.Model):
             if mode_html:
                 email = EmailMultiAlternatives(
                     subject = self.subject,
-                    body = parser.get_plain_text(),
+                    body = self.body,
                     from_email = self.sender,
                     to = [self.receptor_to],
                     bcc = [self.receptor_bcc],
@@ -345,16 +345,16 @@ class Mail(models.Model):
                 email.content_subtype = "html"
                 body = self.body
                 body += self.get_pixel()
-                # TODO: Always send html emails to track if it is opened
                 email.attach_alternative(body, "text/html")
+                # TODO: Always send html emails to track if it is opened
             else:
                 email = EmailMessage(
                     subject = self.subject,
                     body = self.body,
                     from_email = self.sender,
                     to = [self.receptor_to],
-                    bcc = self.receptor_bcc,
-                    reply_to=self.receptor_cc
+                    bcc = [self.receptor_bcc],
+                    reply_to=[self.receptor_cc]
                 )
 
             attachments = Attachment.objects.filter(mail = self)

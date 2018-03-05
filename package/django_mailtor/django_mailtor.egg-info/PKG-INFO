@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: django-mailtor
-Version: 0.0.28
+Version: 0.0.29
 Summary: A Django app 
 Home-page: https://github.com/cavg/django_mailtor/
 Author: Camilo Verdugo
