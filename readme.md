@@ -55,6 +55,12 @@ Have you found a bug or got an idea for a new feature? Feel free to use the [iss
 
 ## Changelog
 
+##### 0.0.31
+* Fix error sending mails cc params
+
+##### 0.0.29
+* Fix error sending mails
+
 ##### 0.0.28
 * fix bcc, cc
 

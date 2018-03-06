@@ -332,6 +332,10 @@ class Mail(models.Model):
         parser.feed(self.body)
         mode_html = parser.is_html()
 
+        self.receptor_to = "" if self.receptor_to == None else self.receptor_to
+        self.receptor_bcc = "" if self.receptor_bcc == None else self.receptor_bcc
+        self.receptor_cc = "" if self.receptor_cc == None else self.receptor_cc
+
         try:
             if mode_html:
                 email = EmailMultiAlternatives(
